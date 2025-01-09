@@ -1,0 +1,194 @@
+body {
+  margin: 0;
+  font-family: 'Arial', sans-serif;
+  background: linear-gradient(135deg, #e0f7fa, #f1f8e9);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.auth-form {
+  background: #fff;
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  width: 90%;
+  max-width: 400px;
+}
+
+.auth-form h1 {
+  text-align: center;
+  color: #333;
+  font-size: 24px;
+}
+
+.auth-form input {
+  width: calc(100% - 20px); /* Добавляем отступы по 10px слева и справа */
+  padding: 10px;
+  margin: 10px 10px; /* Отступы сверху и снизу остаются, добавляем слева и справа */
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.auth-form button {
+  width: calc(100% - 20px); /* Уменьшаем ширину для отступов */
+  padding: 10px;
+  margin: 10px 10px; /* Добавляем отступы слева и справа */
+  background: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.auth-form button:hover {
+  background: #43a047;
+}
+
+.auth-form .social-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin: 20px 10px; /* Отступы слева и справа */
+}
+
+.auth-form .social-buttons button {
+  width: 48%;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.auth-form .social-buttons button.google {
+  background: #db4437;
+  color: white;
+}
+
+.auth-form .social-buttons button.facebook {
+  background: #4267b2;
+  color: white;
+}
+
+.auth-form .register-button {
+  margin-top: 20px; /* Отступ сверху для кнопки регистрации */
+  margin-bottom: 20px; /* Отступ снизу */
+}
+
+.file-check-container {
+  background: #fff;
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  width: 90%;
+  max-width: 400px;
+  margin: 20px auto;
+}
+
+.file-check-container h1 {
+  color: #333;
+  font-size: 20px;
+}
+
+.file-check-container input {
+  display: none;
+}
+
+.file-check-container label {
+  display: block;
+  padding: 20px;
+  margin: 20px 0;
+  background: #f9f9f9;
+  border: 2px dashed #ccc;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.file-check-container label:hover {
+  background: #f1f8e9;
+}
+
+.file-check-container button {
+  padding: 10px 20px;
+  background: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.file-check-container button:hover {
+  background: #43a047;
+}
+
+.toxic {
+  color: red;
+  font-weight: bold;
+}
+
+.safe {
+  color: black;
+}
+
+.profile-container {
+  background: #fff;
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  width: 90%;
+  max-width: 400px;
+  margin: 20px auto;
+}
+
+.profile-container h2 {
+  text-align: center;
+  color: #333;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+  color: #555;
+}
+
+.form-group input,
+.form-group select {
+  width: calc(100% - 20px);
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+.save-button {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  background: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.save-button:hover {
+  background: #43a047;
+}
+
+.message {
+  margin-top: 20px;
+  color: #4caf50;
+  text-align: center;
+}
+
