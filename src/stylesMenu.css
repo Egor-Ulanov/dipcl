@@ -1,0 +1,35 @@
+.menu-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+}
+
+.menu-button {
+  padding: 10px 20px;
+  margin: 0 5px;
+  font-size: 16px;
+  color: white;
+  background: #1976d2;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.3s, transform 0.2s;
+}
+
+.menu-button:hover {
+  background: #1565c0;
+  transform: scale(1.05);
+}
+
+.menu-button:active {
+  transform: scale(1);
+}
+
+.menu-button.logout {
+  background: #d32f2f;
+}
+
+.menu-button.logout:hover {
+  background: #c62828;
+}

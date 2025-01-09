@@ -5,6 +5,7 @@ import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from './firebaseConfig';
+import './styleStats.css';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -15,17 +16,15 @@ function Stats({ user }) {
   const [filteredChecks, setFilteredChecks] = useState([]);
 
   useEffect(() => {
-    // Загружаем статистику для графика
     const fetchStats = async () => {
       const checksRef = collection(db, 'checks');
-      const urlChecksRef = collection(db, 'url_checks'); // Подключаем коллекцию URL-проверок
-    
+      const urlChecksRef = collection(db, 'url_checks');
+
       const checksSnapshot = await getDocs(checksRef);
       const urlChecksSnapshot = await getDocs(urlChecksRef);
-    
-      const dates = {}; // Группируем по дате
-    
-      // Обрабатываем обычные проверки
+
+      const dates = {};
+
       checksSnapshot.forEach((doc) => {
         const check = doc.data();
         const date = check.date.toDate().toISOString().split('T')[0];
@@ -38,8 +37,7 @@ function Stats({ user }) {
           dates[date].toxic++;
         }
       });
-    
-      // Обрабатываем проверки URL
+
       urlChecksSnapshot.forEach((doc) => {
         const check = doc.data();
         const date = check.date.toDate().toISOString().split('T')[0];
@@ -52,11 +50,11 @@ function Stats({ user }) {
           dates[date].toxic++;
         }
       });
-    
+
       const labels = Object.keys(dates);
       const safeValues = labels.map((date) => dates[date].safe);
       const toxicValues = labels.map((date) => dates[date].toxic);
-    
+
       setChartData({
         labels,
         datasets: [
@@ -76,23 +74,20 @@ function Stats({ user }) {
           },
         ],
       });
-    };    
-    
+    };
 
-    // Загружаем полную историю проверок
     const fetchHistory = async () => {
       const checksRef = collection(db, 'checks');
-      const urlChecksRef = collection(db, 'url_checks'); // Коллекция URL-проверок
-    
+      const urlChecksRef = collection(db, 'url_checks');
+
       const checksQuery = query(checksRef, where('email', '==', user.email));
       const urlChecksQuery = query(urlChecksRef, where('email', '==', user.email));
-    
+
       const checksSnapshot = await getDocs(checksQuery);
       const urlChecksSnapshot = await getDocs(urlChecksQuery);
-    
+
       const data = [];
-    
-      // Добавляем обычные проверки
+
       checksSnapshot.forEach((doc) => {
         const check = doc.data();
         data.push({
@@ -103,8 +98,7 @@ function Stats({ user }) {
           violations: check.result.violations,
         });
       });
-    
-      // Добавляем проверки URL
+
       urlChecksSnapshot.forEach((doc) => {
         const check = doc.data();
         data.push({
@@ -115,7 +109,7 @@ function Stats({ user }) {
           violations: check.result.violations,
         });
       });
-    
+
       setHistory(data);
     };
 
@@ -124,7 +118,6 @@ function Stats({ user }) {
   }, [user.email]);
 
   useEffect(() => {
-    // Фильтруем данные по выбранной дате
     const filtered = history.filter((check) => {
       return check.date.toDateString() === selectedDate.toDateString();
     });
@@ -132,13 +125,12 @@ function Stats({ user }) {
   }, [selectedDate, history]);
 
   if (!chartData) {
-    return <p>Загрузка данных...</p>;
+    return <p className="loading-text">Загрузка данных...</p>;
   }
 
   return (
-    <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
-
-      {/* График статистики */}
+    <div className="stats-container">
+      <h2 className="chart-title">Статистика проверок</h2>
       <Bar
         data={chartData}
         options={{
@@ -154,47 +146,33 @@ function Stats({ user }) {
           },
         }}
       />
-
-      <div style={{ display: 'flex', marginTop: '40px', gap: '20px' }}>
-        {/* Календарь */}
+      <div className="stats-content">
         <Calendar
           onChange={setSelectedDate}
           value={selectedDate}
           locale="ru-RU"
         />
-
-        {/* История проверок за выбранную дату */}
-        <div style={{ flex: 1 }}>
+        <div className="checks-history">
           <h3>Проверки за {selectedDate.toLocaleDateString()}</h3>
           {filteredChecks.length === 0 ? (
             <p>Нет проверок за выбранный день.</p>
           ) : (
-            <div style={{ maxHeight: '200px', overflowY: 'scroll', border: '1px solid #ccc', padding: '10px', borderRadius: '8px' }}>
-              <ul style={{ listStyle: 'none', padding: 0 }}>
-                {filteredChecks.map((check) => (
-                  <li
-                    key={check.id}
-                    style={{
-                      border: '1px solid #ccc',
-                      borderRadius: '8px',
-                      padding: '10px',
-                      marginBottom: '10px',
-                    }}
-                  >
-                    <p><strong>Текст:</strong> {check.text}</p>
+            <ul>
+              {filteredChecks.map((check) => (
+                <li key={check.id}>
+                  <p><strong>Текст:</strong> {check.text}</p>
+                  <p>
+                    <strong>Результат:</strong>{' '}
+                    {check.is_safe ? 'Запрещенного контента не обнаружено' : 'Обнаружены нарушения'}
+                  </p>
+                  {check.violations && check.violations.length > 0 && (
                     <p>
-                      <strong>Результат:</strong>{' '}
-                      {check.is_safe ? 'Запрещенного контента не обнаружено' : 'Обнаружены нарушения'}
+                      <strong>Нарушения:</strong> {check.violations.join(', ')}
                     </p>
-                    {check.violations && check.violations.length > 0 && (
-                      <p>
-                        <strong>Нарушения:</strong> {check.violations.join(', ')}
-                      </p>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </div>
+                  )}
+                </li>
+              ))}
+            </ul>
           )}
         </div>
       </div>

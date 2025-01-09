@@ -4,6 +4,7 @@ import Auth from './Auth';
 import Home from './Home';
 import ProfileSettings from './ProfileSettings';
 import Stats from './Stats';
+import Instructions from './Instructions';
 import Menu from './Menu';
 
 function App() {
@@ -25,6 +26,7 @@ function App() {
           path="/stats"
           element={user ? <Stats user={user}/> : <Navigate to="/" />}
         />
+        <Route path="/instructions" element={<Instructions />} />
         <Route
           path="/profile"
           element={user ? <ProfileSettings user={user} /> : <Navigate to="/" />}

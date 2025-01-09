@@ -3,7 +3,7 @@ import { auth } from './firebaseConfig';
 import { updateEmail, updatePassword } from 'firebase/auth';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from './firebaseConfig';
-import './styles.css';
+import './stylesProfile.css';
 
 function ProfileSettings({ user }) {
   const [profileData, setProfileData] = useState({
@@ -64,7 +64,7 @@ function ProfileSettings({ user }) {
   return (
     <div className="profile-container">
       <h2>Настройки профиля</h2>
-      <form onSubmit={handleSaveChanges}>
+      <form onSubmit={handleSaveChanges} className="profile-form">
         <div className="form-group">
           <label>Логин:</label>
           <input

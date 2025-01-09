@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import './stylesMenu.css'; // Подключаем стили
 
 function Menu({ setUser }) {
   const navigate = useNavigate();
@@ -10,17 +11,20 @@ function Menu({ setUser }) {
   };
 
   return (
-    <nav style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', background: '#f0f0f0' }}>
-      <button onClick={() => navigate('/check')} style={{ padding: '10px 20px' }}>
+    <nav className="menu-container">
+      <button className="menu-button" onClick={() => navigate('/check')}>
         Проверка текста
       </button>
-      <button onClick={() => navigate('/stats')} style={{ padding: '10px 20px' }}>
+      <button className="menu-button" onClick={() => navigate('/stats')}>
         Статистика
       </button>
-      <button onClick={() => navigate('/profile')} style={{ padding: '10px 20px' }}>
+      <button className="menu-button" onClick={() => navigate('/profile')}>
         Настройки профиля
       </button>
-      <button onClick={handleLogout} style={{ padding: '10px 20px', backgroundColor: 'red', color: 'white' }}>
+      <button className="menu-button" onClick={() => navigate('/instructions')}>
+  Инструкция
+</button>
+      <button className="menu-button logout" onClick={handleLogout}>
         Выйти
       </button>
     </nav>

@@ -1,0 +1,91 @@
+body {
+  margin: 0;
+  font-family: 'Arial', sans-serif;
+  background: linear-gradient(135deg, #e0f7fa, #bbdefb);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column; /* Это может помочь при использовании нескольких элементов */
+  justify-content: center;
+  align-items: center;
+}
+
+.file-check-container {
+  background: #fff;
+  border-radius: 15px;
+  padding: 25px;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  max-width: 600px;
+  margin: 20px auto; /* Центрирование контейнера */
+}
+
+
+.file-check-container h1 {
+  color: #1976d2;
+  font-size: 24px;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.file-check-container textarea {
+  width: calc(100% - 20px); /* Учитываем внутренние отступы */
+  margin: 10px 10px;
+  padding: 10px;
+  border: 1px solid #90caf9;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+.file-check-container label {
+  display: block;
+  padding: 15px;
+  margin: 20px 10px;
+  background: #e3f2fd;
+  border: 2px dashed #90caf9;
+  border-radius: 10px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.file-check-container label:hover {
+  background: #bbdefb;
+}
+
+.file-check-container button {
+  display: block;
+  width: calc(100% - 20px);
+  margin: 10px auto;
+  padding: 10px;
+  font-size: 16px;
+  border: none;
+  border-radius: 5px;
+  background: #1976d2;
+  color: white;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.file-check-container button:hover {
+  background: #1565c0;
+}
+
+.file-check-container .results {
+  margin-top: 20px;
+  background: #e3f2fd;
+  padding: 15px;
+  border-radius: 10px;
+  color: #333;
+}
+
+.file-check-container .results h3 {
+  color: #1976d2;
+}
+
+.file-check-container .results .toxic {
+  color: red;
+  font-weight: bold;
+}
+
+.file-check-container .results .safe {
+  color: green;
+}

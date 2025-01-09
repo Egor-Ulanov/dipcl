@@ -3,6 +3,7 @@ import { auth } from './firebaseConfig';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from './firebaseConfig';
+import './styles.css';
 
 function Auth({ setUser }) {
   const [isLogin, setIsLogin] = useState(true);
@@ -42,6 +43,7 @@ function Auth({ setUser }) {
 
   return (
     <div className="auth-form">
+      <div className="app-icon"></div>
       <h1>{isLogin ? 'Вход' : 'Регистрация'}</h1>
       <form onSubmit={handleAuth}>
         <input
@@ -69,7 +71,7 @@ function Auth({ setUser }) {
         />
         <button type="submit">{isLogin ? 'Войти' : 'Зарегистрироваться'}</button>
       </form>
-      <button onClick={() => setIsLogin(!isLogin)}>
+      <button className="switch-button" onClick={() => setIsLogin(!isLogin)}>
         {isLogin ? 'Зарегистрироваться' : 'Уже есть аккаунт? Войти'}
       </button>
     </div>

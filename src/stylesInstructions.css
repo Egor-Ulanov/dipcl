@@ -1,0 +1,28 @@
+.instructions-container {
+  max-width: 800px;
+  margin: 20px auto;
+  padding: 20px;
+  background: #ffffff;
+  border-radius: 15px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.instructions-container h1 {
+  text-align: center;
+  color: #1976d2;
+  margin-bottom: 20px;
+}
+
+.instructions-content h2 {
+  color: #333;
+  margin-top: 20px;
+}
+
+.instructions-content ul, .instructions-content ol {
+  margin-left: 20px;
+  color: #555;
+}
+
+.instructions-content ul li, .instructions-content ol li {
+  margin-bottom: 10px;
+}
