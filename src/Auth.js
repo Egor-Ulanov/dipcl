@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { auth } from './firebaseConfig';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { collection, query, where, getDocs } from 'firebase/firestore';
+import { setDoc, doc } from 'firebase/firestore';
 import { db } from './firebaseConfig';
 import './styles.css';
 
@@ -34,7 +35,15 @@ function Auth({ setUser }) {
       } else {
         // Логика регистрации
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        setUser(userCredential.user);
+        const user = userCredential.user;
+
+        await setDoc(doc(db, 'users', user.uid), {
+          login: login,
+          email: email,
+          createdAt: new Date(),
+        });
+
+        setUser(user);
       }
     } catch (error) {
       alert(error.message);
