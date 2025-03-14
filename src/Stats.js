@@ -17,47 +17,55 @@ function Stats({ user }) {
 
   useEffect(() => {
     const fetchStats = async () => {
-
       if (!user?.email) return;
-
+    
       const checksRef = collection(db, 'checks');
       const urlChecksRef = collection(db, 'url_checks');
-
-      const checksSnapshot = await getDocs(checksRef, where('email', '==', user.email));
-      const urlChecksSnapshot = await getDocs(urlChecksRef, where('email', '==', user.email));
-
+    
+      const checksQuery = query(checksRef, where('email', '==', user.email));
+      const urlChecksQuery = query(urlChecksRef, where('email', '==', user.email));
+    
+      const checksSnapshot = await getDocs(checksQuery);
+      const urlChecksSnapshot = await getDocs(urlChecksQuery);
+    
       const dates = {};
-
+    
       checksSnapshot.forEach((doc) => {
         const check = doc.data();
+        if (!check.date) return; // Защита от ошибок
         const date = check.date.toDate().toISOString().split('T')[0];
+    
         if (!dates[date]) {
           dates[date] = { safe: 0, toxic: 0 };
         }
+    
         if (check.result.is_safe) {
           dates[date].safe++;
         } else {
           dates[date].toxic++;
         }
       });
-
+    
       urlChecksSnapshot.forEach((doc) => {
         const check = doc.data();
+        if (!check.date) return;
         const date = check.date.toDate().toISOString().split('T')[0];
+    
         if (!dates[date]) {
           dates[date] = { safe: 0, toxic: 0 };
         }
+    
         if (check.result.is_safe) {
           dates[date].safe++;
         } else {
           dates[date].toxic++;
         }
       });
-
+    
       const labels = Object.keys(dates);
       const safeValues = labels.map((date) => dates[date].safe);
       const toxicValues = labels.map((date) => dates[date].toxic);
-
+    
       setChartData({
         labels,
         datasets: [
@@ -78,6 +86,7 @@ function Stats({ user }) {
         ],
       });
     };
+    
 
     const fetchHistory = async () => {
       const checksRef = collection(db, 'checks');
