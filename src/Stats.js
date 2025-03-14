@@ -17,11 +17,14 @@ function Stats({ user }) {
 
   useEffect(() => {
     const fetchStats = async () => {
+
+      if (!user?.email) return;
+
       const checksRef = collection(db, 'checks');
       const urlChecksRef = collection(db, 'url_checks');
 
-      const checksSnapshot = await getDocs(checksRef);
-      const urlChecksSnapshot = await getDocs(urlChecksRef);
+      const checksSnapshot = await getDocs(checksRef, where('email', '==', user.email));
+      const urlChecksSnapshot = await getDocs(urlChecksRef, where('email', '==', user.email));
 
       const dates = {};
 
