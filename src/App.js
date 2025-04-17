@@ -32,6 +32,10 @@ function App() {
           element={user ? <ProfileSettings user={user} /> : <Navigate to="/" />}
         />
         <Route
+          path="/register-group"
+          element={user ? <RegisterGroup user={user} /> : <Navigate to="/" />}
+        />
+        <Route
           path="*"
           element={<Navigate to="/" />}
         />

@@ -16,56 +16,51 @@ function Stats({ user }) {
   const [filteredChecks, setFilteredChecks] = useState([]);
 
   useEffect(() => {
-    const fetchStats = async () => {
+    const fetchStatsAndHistory = async () => {
       if (!user?.email) return;
-    
-      const checksRef = collection(db, 'checks');
-      const urlChecksRef = collection(db, 'url_checks');
-    
-      const checksQuery = query(checksRef, where('email', '==', user.email));
-      const urlChecksQuery = query(urlChecksRef, where('email', '==', user.email));
-    
-      const checksSnapshot = await getDocs(checksQuery);
-      const urlChecksSnapshot = await getDocs(urlChecksQuery);
-    
+  
+      const groupsRef = collection(db, 'groups');
+      const groupDocs = await getDocs(query(groupsRef, where('info.admin_email', '==', user.email)));
+  
       const dates = {};
-    
-      checksSnapshot.forEach((doc) => {
-        const check = doc.data();
-        if (!check.date) return; // Защита от ошибок
-        const date = check.date.toDate().toISOString().split('T')[0];
-    
-        if (!dates[date]) {
-          dates[date] = { safe: 0, toxic: 0 };
-        }
-    
-        if (check.result.is_safe) {
-          dates[date].safe++;
-        } else {
-          dates[date].toxic++;
-        }
-      });
-    
-      urlChecksSnapshot.forEach((doc) => {
-        const check = doc.data();
-        if (!check.date) return;
-        const date = check.date.toDate().toISOString().split('T')[0];
-    
-        if (!dates[date]) {
-          dates[date] = { safe: 0, toxic: 0 };
-        }
-    
-        if (check.result.is_safe) {
-          dates[date].safe++;
-        } else {
-          dates[date].toxic++;
-        }
-      });
-    
+      const data = [];
+  
+      for (const groupDoc of groupDocs.docs) {
+        const groupId = groupDoc.id;
+        const checksRef = collection(db, 'groups', groupId, 'checks');
+        const checksSnapshot = await getDocs(checksRef);
+  
+        checksSnapshot.forEach((doc) => {
+          const check = doc.data();
+          if (!check.date) return;
+          const date = check.date.toDate().toISOString().split('T')[0];
+  
+          if (!dates[date]) {
+            dates[date] = { safe: 0, toxic: 0 };
+          }
+  
+          if (check.result.is_safe) {
+            dates[date].safe++;
+          } else {
+            dates[date].toxic++;
+          }
+  
+          data.push({
+            id: doc.id,
+            date: check.date.toDate(),
+            text: check.text || 'Сообщение',
+            is_safe: check.result.is_safe,
+            violations: check.result.violations,
+          });
+        });
+      }
+  
+      setHistory(data);
+  
       const labels = Object.keys(dates);
       const safeValues = labels.map((date) => dates[date].safe);
       const toxicValues = labels.map((date) => dates[date].toxic);
-    
+  
       setChartData({
         labels,
         datasets: [
@@ -86,48 +81,10 @@ function Stats({ user }) {
         ],
       });
     };
-    
-
-    const fetchHistory = async () => {
-      const checksRef = collection(db, 'checks');
-      const urlChecksRef = collection(db, 'url_checks');
-
-      const checksQuery = query(checksRef, where('email', '==', user.email));
-      const urlChecksQuery = query(urlChecksRef, where('email', '==', user.email));
-
-      const checksSnapshot = await getDocs(checksQuery);
-      const urlChecksSnapshot = await getDocs(urlChecksQuery);
-
-      const data = [];
-
-      checksSnapshot.forEach((doc) => {
-        const check = doc.data();
-        data.push({
-          id: doc.id,
-          date: check.date.toDate(),
-          text: check.text || 'Обычная проверка',
-          is_safe: check.result.is_safe,
-          violations: check.result.violations,
-        });
-      });
-
-      urlChecksSnapshot.forEach((doc) => {
-        const check = doc.data();
-        data.push({
-          id: doc.id,
-          date: check.date.toDate(),
-          text: check.result.url || 'URL проверка',
-          is_safe: check.result.is_safe,
-          violations: check.result.violations,
-        });
-      });
-
-      setHistory(data);
-    };
-
-    fetchStats();
-    fetchHistory();
+  
+    fetchStatsAndHistory();
   }, [user.email]);
+  
 
   useEffect(() => {
     const filtered = history.filter((check) => {
