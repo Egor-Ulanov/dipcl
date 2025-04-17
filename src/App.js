@@ -4,6 +4,7 @@ import Auth from './Auth';
 import Home from './Home';
 import ProfileSettings from './ProfileSettings';
 import Stats from './Stats';
+import RegisterGroup from './RegisterGroup';
 import Instructions from './Instructions';
 import Menu from './Menu';
 
