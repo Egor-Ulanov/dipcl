@@ -18,12 +18,15 @@ function Menu({ setUser }) {
       <button className="menu-button" onClick={() => navigate('/stats')}>
         Статистика
       </button>
+      <button className="menu-button" onClick={() => navigate('/register-group')}>
+        Регистрация группы(Telegram)
+      </button>
       <button className="menu-button" onClick={() => navigate('/profile')}>
         Настройки профиля
       </button>
       <button className="menu-button" onClick={() => navigate('/instructions')}>
-  Инструкция
-</button>
+        Инструкция
+      </button>
       <button className="menu-button logout" onClick={handleLogout}>
         Выйти
       </button>
