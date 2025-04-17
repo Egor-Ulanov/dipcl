@@ -11,7 +11,7 @@ function RegisterGroup({ user }) {
   const handleRegister = async (e) => {
     e.preventDefault();
     if (!groupId || !groupTitle || !user?.email) return;
-    if (!chatId || !groupTitle) {
+    if (!groupId || !groupTitle) {
       alert("Заполните все поля");
       return;
     }
