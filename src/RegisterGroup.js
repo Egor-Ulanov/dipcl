@@ -11,7 +11,10 @@ function RegisterGroup({ user }) {
   const handleRegister = async (e) => {
     e.preventDefault();
     if (!groupId || !groupTitle || !user?.email) return;
-
+    if (!chatId || !groupTitle) {
+      alert("Заполните все поля");
+      return;
+    }
     try {
       await setDoc(doc(db, 'groups', groupId), {
         info: {
@@ -23,6 +26,7 @@ function RegisterGroup({ user }) {
     } catch (err) {
       console.error('Ошибка при регистрации группы:', err);
     }
+    console.log("Попытка зарегистрировать:", groupId, groupTitle);
   };
 
   return (
