@@ -6,27 +6,36 @@ import './styleStats.css';
 function RegisterGroup({ user }) {
   const [groupId, setGroupId] = useState('');
   const [groupTitle, setGroupTitle] = useState('');
-  const [success, setSuccess] = useState(false);
+  const [message, setMessage] = useState('');
 
   const handleRegister = async (e) => {
     e.preventDefault();
-    if (!groupId || !groupTitle || !user?.email) return;
-    if (!groupId || !groupTitle) {
-      alert("Заполните все поля");
+
+    if (!user?.email) {
+      setMessage('Ошибка: вы не авторизованы.');
       return;
     }
+
+    if (!groupId.trim() || !groupTitle.trim()) {
+      setMessage('Пожалуйста, заполните все поля.');
+      return;
+    }
+
     try {
-      await setDoc(doc(db, 'groups', groupId), {
+      await setDoc(doc(db, 'groups', groupId.trim()), {
         info: {
-          title: groupTitle,
+          title: groupTitle.trim(),
           admin_email: user.email,
         },
       });
-      setSuccess(true);
-    } catch (err) {
-      console.error('Ошибка при регистрации группы:', err);
+      setMessage(' Группа успешно зарегистрирована!');
+      setGroupId('');
+      setGroupTitle('');
+      console.log('Зарегистрировано:', groupId, groupTitle);
+    } catch (error) {
+      console.error('Ошибка при записи в Firestore:', error);
+      setMessage(' Не удалось зарегистрировать группу. Проверь консоль.');
     }
-    console.log("Попытка зарегистрировать:", groupId, groupTitle);
   };
 
   return (
@@ -38,18 +47,16 @@ function RegisterGroup({ user }) {
           placeholder="ID группы (chat.id)"
           value={groupId}
           onChange={(e) => setGroupId(e.target.value)}
-          required
         />
         <input
           type="text"
           placeholder="Название группы"
           value={groupTitle}
           onChange={(e) => setGroupTitle(e.target.value)}
-          required
         />
         <button type="submit">Зарегистрировать</button>
-        {success && <p className="success">Группа успешно зарегистрирована!</p>}
       </form>
+      {message && <p className="message">{message}</p>}
     </div>
   );
 }
