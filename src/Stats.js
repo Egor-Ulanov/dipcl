@@ -58,7 +58,7 @@ function Stats({ user }) {
   
       setHistory(data);
   
-      const labels = Object.keys(dates);
+      const labels = Object.keys(dates).sort();
       const safeValues = labels.map((date) => dates[date].safe);
       const toxicValues = labels.map((date) => dates[date].toxic);
   
@@ -118,7 +118,7 @@ function Stats({ user }) {
   
       setHistory(data);
   
-      const labels = Object.keys(dates);
+      const labels = Object.keys(dates).sort();
       const safeValues = labels.map((date) => dates[date].safe);
       const toxicValues = labels.map((date) => dates[date].toxic);
   
@@ -165,7 +165,7 @@ function Stats({ user }) {
   return (
     <div className="stats-container">
       <h2 className="chart-title">Статистика проверок</h2>
-      <select value={source} onChange={(e) => setSource(e.target.value)}>
+      <select className="stats-select" value={source} onChange={(e) => setSource(e.target.value)}>
         <option value="telegram">Telegram-группы</option>
         <option value="personal">Личные проверки</option>
       </select>

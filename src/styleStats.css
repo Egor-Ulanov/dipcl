@@ -78,3 +78,19 @@
 .checks-history li strong {
   color: #1976d2;
 }
+
+.stats-select {
+  padding: 8px 12px;
+  font-size: 16px;
+  margin-bottom: 20px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background-color: white;
+  color: #333;
+  outline: none;
+  transition: border-color 0.3s;
+}
+
+.stats-select:focus {
+  border-color: #2196f3;
+}
