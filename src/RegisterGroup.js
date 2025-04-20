@@ -34,7 +34,7 @@ function RegisterGroup({ user }) {
       console.log('Зарегистрировано:', groupId, groupTitle);
     } catch (error) {
       console.error('Ошибка при записи в Firestore:', error);
-      setMessage(' Не удалось зарегистрировать группу. Проверь консоль.');
+      setMessage(' Не удалось зарегистрировать группу. Проверь консоль.', error);
     }
   };
 

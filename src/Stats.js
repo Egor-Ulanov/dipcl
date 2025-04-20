@@ -14,9 +14,10 @@ function Stats({ user }) {
   const [history, setHistory] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [filteredChecks, setFilteredChecks] = useState([]);
+  const [source, setSource] = useState('telegram'); // или 'personal'
 
   useEffect(() => {
-    const fetchStatsAndHistory = async () => {
+    const fetchTelegramChecks  = async () => {
       if (!user?.email) return;
   
       const groupsRef = collection(db, 'groups');
@@ -81,9 +82,73 @@ function Stats({ user }) {
         ],
       });
     };
+
+    const fetchPersonalChecks  = async () => {
+      if (!user?.email) return;
+      const dates = {};
+      const data = [];
+
+        const checksRef = collection(db, 'checks');
+        const checksSnapshot = await getDocs(query(checksRef, where('email', '==', user.email)));
   
-    fetchStatsAndHistory();
-  }, [user.email]);
+        checksSnapshot.forEach((doc) => {
+          const check = doc.data();
+          if (!check.date) return;
+          const date = check.date.toDate().toISOString().split('T')[0];
+  
+          if (!dates[date]) {
+            dates[date] = { safe: 0, toxic: 0 };
+          }
+  
+          if (check.result.is_safe) {
+            dates[date].safe++;
+          } else {
+            dates[date].toxic++;
+          }
+  
+          data.push({
+            id: doc.id,
+            date: check.date.toDate(),
+            text: check.text || 'Сообщение',
+            is_safe: check.result.is_safe,
+            violations: check.result.violations,
+          });
+        });
+      
+  
+      setHistory(data);
+  
+      const labels = Object.keys(dates);
+      const safeValues = labels.map((date) => dates[date].safe);
+      const toxicValues = labels.map((date) => dates[date].toxic);
+  
+      setChartData({
+        labels,
+        datasets: [
+          {
+            label: 'Обычные проверки',
+            data: safeValues,
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 1,
+          },
+          {
+            label: 'Токсичные проверки',
+            data: toxicValues,
+            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+            borderColor: 'rgba(255, 99, 132, 1)',
+            borderWidth: 1,
+          },
+        ],
+      });
+    };
+
+    if (source === 'telegram') {
+      fetchTelegramChecks();
+    } else {
+      fetchPersonalChecks();
+    }
+  }, [source, user.email]);
   
 
   useEffect(() => {
@@ -100,6 +165,10 @@ function Stats({ user }) {
   return (
     <div className="stats-container">
       <h2 className="chart-title">Статистика проверок</h2>
+      <select value={source} onChange={(e) => setSource(e.target.value)}>
+        <option value="telegram">Telegram-группы</option>
+        <option value="personal">Личные проверки</option>
+      </select>
       <Bar
         data={chartData}
         options={{
@@ -129,6 +198,7 @@ function Stats({ user }) {
             <ul>
               {filteredChecks.map((check) => (
                 <li key={check.id}>
+                  <p><strong>Автор:</strong> {check.author || 'Неизвестен'}</p>
                   <p><strong>Текст:</strong> {check.text}</p>
                   <p>
                     <strong>Результат:</strong>{' '}
