@@ -50,6 +50,7 @@ function Stats({ user }) {
             id: doc.id,
             date: check.date.toDate(),
             text: check.text || 'Сообщение',
+            author: check.author || 'Неизвестен', // <--- добавить
             is_safe: check.result.is_safe,
             violations: check.result.violations,
           });
@@ -110,6 +111,7 @@ function Stats({ user }) {
             id: doc.id,
             date: check.date.toDate(),
             text: check.text || 'Сообщение',
+            author: check.author || 'Неизвестен', // <--- добавить
             is_safe: check.result.is_safe,
             violations: check.result.violations,
           });
