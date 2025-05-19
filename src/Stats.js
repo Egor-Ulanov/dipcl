@@ -15,6 +15,7 @@ function Stats({ user }) {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [filteredChecks, setFilteredChecks] = useState([]);
   const [source, setSource] = useState('telegram'); // или 'personal'
+  const [reviewChartData, setReviewChartData] = useState(null);
 
   useEffect(() => {
     const fetchTelegramChecks  = async () => {
@@ -22,7 +23,7 @@ function Stats({ user }) {
   
       const groupsRef = collection(db, 'groups');
       const groupDocs = await getDocs(query(groupsRef, where('info.admin_email', '==', user.email)));
-  
+      const reviewDates = {};
       const dates = {};
       const data = [];
   
@@ -56,6 +57,16 @@ function Stats({ user }) {
           });
         });
       }
+      if (check.review) {
+        if (!reviewDates[date]) {
+          reviewDates[date] = { positive: 0, negative: 0 };
+        }
+        if (check.sentiment === true) {
+          reviewDates[date].positive++;
+        } else if (check.sentiment === false) {
+          reviewDates[date].negative++;
+        }
+      }
   
       setHistory(data);
   
@@ -78,6 +89,30 @@ function Stats({ user }) {
             data: toxicValues,
             backgroundColor: 'rgba(255, 99, 132, 0.2)',
             borderColor: 'rgba(255, 99, 132, 1)',
+            borderWidth: 1,
+          },
+        ],
+      });
+
+      const reviewLabels = Object.keys(reviewDates).sort();
+      const positiveValues = reviewLabels.map((date) => reviewDates[date].positive);
+      const negativeValues = reviewLabels.map((date) => reviewDates[date].negative);
+
+      setReviewChartData({
+        labels: reviewLabels,
+        datasets: [
+          {
+            label: 'Положительные отзывы',
+            data: positiveValues,
+            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 1,
+          },
+          {
+            label: 'Отрицательные отзывы',
+            data: negativeValues,
+            backgroundColor: 'rgba(255, 206, 86, 0.2)',
+            borderColor: 'rgba(255, 206, 86, 1)',
             borderWidth: 1,
           },
         ],
