@@ -46,6 +46,17 @@ function Stats({ user }) {
           } else {
             dates[date].toxic++;
           }
+
+          if (check.review) {
+            if (!reviewDates[date]) {
+              reviewDates[date] = { positive: 0, negative: 0 };
+            }
+            if (check.sentiment === true) {
+              reviewDates[date].positive++;
+            } else if (check.sentiment === false) {
+              reviewDates[date].negative++;
+            }
+          }
   
           data.push({
             id: doc.id,
@@ -56,16 +67,6 @@ function Stats({ user }) {
             violations: check.result.violations,
           });
         });
-      }
-      if (check.review) {
-        if (!reviewDates[date]) {
-          reviewDates[date] = { positive: 0, negative: 0 };
-        }
-        if (check.sentiment === true) {
-          reviewDates[date].positive++;
-        } else if (check.sentiment === false) {
-          reviewDates[date].negative++;
-        }
       }
   
       setHistory(data);
