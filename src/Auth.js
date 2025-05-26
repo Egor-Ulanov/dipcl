@@ -11,9 +11,14 @@ function Auth({ setUser }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [login, setLogin] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleAuth = async (e) => {
     e.preventDefault();
+    setError('');
+    setLoading(true);
+
     try {
       if (isLogin) {
         // Логика входа
@@ -22,8 +27,7 @@ function Auth({ setUser }) {
         const querySnapshot = await getDocs(q);
 
         if (querySnapshot.empty) {
-          alert('Логин не найден. Проверьте данные.');
-          return;
+          throw new Error('Логин не найден. Проверьте данные.');
         }
 
         const userDoc = querySnapshot.docs[0];
@@ -33,6 +37,15 @@ function Auth({ setUser }) {
         const userCredential = await signInWithEmailAndPassword(auth, userEmail, password);
         setUser(userCredential.user);
       } else {
+        // Проверка существующего логина
+        const usersRef = collection(db, 'users');
+        const q = query(usersRef, where('login', '==', login));
+        const querySnapshot = await getDocs(q);
+
+        if (!querySnapshot.empty) {
+          throw new Error('Такой логин уже существует');
+        }
+
         // Логика регистрации
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
@@ -46,7 +59,9 @@ function Auth({ setUser }) {
         setUser(user);
       }
     } catch (error) {
-      alert(error.message);
+      setError(error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -54,12 +69,14 @@ function Auth({ setUser }) {
     <div className="auth-form">
       <div className="app-icon"></div>
       <h1>{isLogin ? 'Вход' : 'Регистрация'}</h1>
+      {error && <div className="error-message">{error}</div>}
       <form onSubmit={handleAuth}>
         <input
           type="text"
           placeholder="Логин"
           value={login}
           onChange={(e) => setLogin(e.target.value)}
+          disabled={loading}
           required
         />
         {!isLogin && (
@@ -68,6 +85,7 @@ function Auth({ setUser }) {
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            disabled={loading}
             required
           />
         )}
@@ -76,11 +94,21 @@ function Auth({ setUser }) {
           placeholder="Пароль"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          disabled={loading}
           required
         />
-        <button type="submit">{isLogin ? 'Войти' : 'Зарегистрироваться'}</button>
+        <button type="submit" disabled={loading}>
+          {loading ? 'Загрузка...' : isLogin ? 'Войти' : 'Зарегистрироваться'}
+        </button>
       </form>
-      <button className="switch-button" onClick={() => setIsLogin(!isLogin)}>
+      <button 
+        className="switch-button" 
+        onClick={() => {
+          setIsLogin(!isLogin);
+          setError('');
+        }}
+        disabled={loading}
+      >
         {isLogin ? 'Зарегистрироваться' : 'Уже есть аккаунт? Войти'}
       </button>
     </div>

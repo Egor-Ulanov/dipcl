@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import * as Mammoth from 'mammoth';
-import './stylesHome.css';
+import './stylesCheck.css';
 
 function Home({ user }) {
   const [text, setText] = useState("");

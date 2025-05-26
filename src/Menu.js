@@ -12,6 +12,9 @@ function Menu({ setUser }) {
 
   return (
     <nav className="menu-container">
+      <button className="menu-button" onClick={() => navigate('/home')}>
+        Главная
+      </button>
       <button className="menu-button" onClick={() => navigate('/check')}>
         Проверка текста
       </button>

@@ -1,40 +1,92 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Auth from './Auth';
-import Home from './Home';
-import ProfileSettings from './ProfileSettings';
+import Menu from './Menu';
+import HomePage from './HomePage';
+import Check from './Check';
 import Stats from './Stats';
 import RegisterGroup from './RegisterGroup';
+import Profile from './ProfileSettings';
 import Instructions from './Instructions';
-import Menu from './Menu';
+import PrivateRoute from './PrivateRoute';
 
 function App() {
   const [user, setUser] = useState(null);
 
   return (
     <Router>
-      {user && <Menu setUser={setUser} />} {/* Показываем меню только если пользователь авторизован */}
       <Routes>
+        <Route 
+          path="/" 
+          element={
+            user ? <Navigate to="/home" /> : <Auth setUser={setUser} />
+          } 
+        />
         <Route
-          path="/"
-          element={user ? <Navigate to="/check" /> : <Auth setUser={setUser} />}
+          path="/home"
+          element={
+            <PrivateRoute user={user}>
+              <div>
+                <Menu setUser={setUser} />
+                <HomePage />
+              </div>
+            </PrivateRoute>
+          }
         />
         <Route
           path="/check"
-          element={user ? <Home user={user} /> : <Navigate to="/" />}
+          element={
+            <PrivateRoute user={user}>
+              <div>
+                <Menu setUser={setUser} />
+                <Check />
+              </div>
+            </PrivateRoute>
+          }
         />
         <Route
           path="/stats"
-          element={user ? <Stats user={user}/> : <Navigate to="/" />}
-        />
-        <Route path="/instructions" element={<Instructions />} />
-        <Route
-          path="/profile"
-          element={user ? <ProfileSettings user={user} /> : <Navigate to="/" />}
+          element={
+            <PrivateRoute user={user}>
+              <div>
+                <Menu setUser={setUser} />
+                <Stats />
+              </div>
+            </PrivateRoute>
+          }
         />
         <Route
           path="/register-group"
-          element={user ? <RegisterGroup user={user} /> : <Navigate to="/" />}
+          element={
+            <PrivateRoute user={user}>
+              <div>
+                <Menu setUser={setUser} />
+                <RegisterGroup />
+              </div>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <PrivateRoute user={user}>
+              <div>
+                <Menu setUser={setUser} />
+                <Profile user={user} />
+              </div>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/instructions"
+          element={
+            <PrivateRoute user={user}>
+              <div>
+                <Menu setUser={setUser} />
+                <Instructions />
+              </div>
+            </PrivateRoute>
+          }
         />
         <Route
           path="*"
