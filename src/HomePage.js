@@ -38,33 +38,53 @@ function HomePage() {
   }, [user]);
 
   const uploadToCloudinary = async (file) => {
+    console.log('Начинаем загрузку в Cloudinary...');
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
 
     try {
-        const response = await fetch('/upload-image', {
-            method: 'POST',
-            body: formData
-        });
-        const data = await response.json();
-        return data.url;
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+        {
+          method: 'POST',
+          body: formData,
+        }
+      );
+      
+      if (!response.ok) {
+        throw new Error('Ошибка загрузки в Cloudinary: ' + response.statusText);
+      }
+
+      const data = await response.json();
+      console.log('Получен ответ от Cloudinary:', data);
+      return data.secure_url;
     } catch (error) {
-        console.error('Error uploading to Cloudinary:', error);
-        throw error;
+      console.error('Ошибка при загрузке в Cloudinary:', error);
+      throw error;
     }
-};
+  };
 
   const handleLogoUpload = async () => {
     if (newLogo && user) {
       try {
         setLoading(true);
+        console.log('Загружаем логотип...');
+        
+        // Загружаем в Cloudinary
         const url = await uploadToCloudinary(newLogo);
+        console.log('Логотип загружен, URL:', url);
+        
+        // Сохраняем URL в Firebase
         setLogoURL(url);
         await updateDoc(doc(db, "users", user.uid), {
           logoURL: url,
         });
+        
+        console.log('URL логотипа сохранен в Firebase');
       } catch (error) {
-        console.error('Error uploading logo:', error);
+        console.error('Ошибка при загрузке логотипа:', error);
+        alert('Не удалось загрузить логотип: ' + error.message);
       } finally {
         setLoading(false);
       }
@@ -75,16 +95,24 @@ function HomePage() {
     if (newImages.length > 0 && user) {
       try {
         setLoading(true);
+        console.log('Загружаем изображения...');
+        
+        // Загружаем все изображения в Cloudinary
         const uploadPromises = Array.from(newImages).map(uploadToCloudinary);
         const urls = await Promise.all(uploadPromises);
+        console.log('Изображения загружены, URLs:', urls);
         
+        // Сохраняем URLs в Firebase
         const updatedImages = [...images, ...urls];
         setImages(updatedImages);
         await updateDoc(doc(db, "users", user.uid), {
           images: updatedImages,
         });
+        
+        console.log('URLs изображений сохранены в Firebase');
       } catch (error) {
-        console.error('Error uploading images:', error);
+        console.error('Ошибка при загрузке изображений:', error);
+        alert('Не удалось загрузить изображения: ' + error.message);
       } finally {
         setLoading(false);
       }
@@ -93,27 +121,23 @@ function HomePage() {
 
   const handleDescriptionSave = async () => {
     if (user) {
-      await setDoc(
-        doc(db, "users", user.uid),
-        { description },
-        { merge: true }
-      );
+      try {
+        console.log('Сохраняем описание...');
+        await setDoc(
+          doc(db, "users", user.uid),
+          { description },
+          { merge: true }
+        );
+        console.log('Описание сохранено');
+      } catch (error) {
+        console.error('Ошибка при сохранении описания:', error);
+        alert('Не удалось сохранить описание: ' + error.message);
+      }
     }
   };
 
   return (
     <div className="homepage-container">
-      <aside className="sidebar">
-        <h2 className="logo">ЛОГО</h2>
-        <nav className="nav-links">
-          <a href="/check">Проверка</a>
-          <a href="/stats">Статистика</a>
-          <a href="/register-group">Группы</a>
-          <a href="/profile">Профиль</a>
-          <a href="/instructions">Инструкция</a>
-        </nav>
-      </aside>
-
       <main className="main-content">
         <header className="header">
           {logoURL && (
@@ -153,7 +177,7 @@ function HomePage() {
             type="file"
             accept="image/*"
             multiple
-            onChange={(e) => setNewImages(e.target.files)}
+            onChange={(e) => setNewImages(Array.from(e.target.files))}
             disabled={loading}
           />
           <button onClick={handleImagesUpload} disabled={loading}>
