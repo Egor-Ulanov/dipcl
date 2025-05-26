@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import './stylesMenu.css'; // Подключаем стили
 
-function Menu({ setUser }) {
+function Menu({ setUser, isEditing, setIsEditing }) {
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -20,6 +20,12 @@ function Menu({ setUser }) {
       </button>
       <button className="menu-button" onClick={() => navigate('/stats')}>
         Статистика
+      </button>
+      <button 
+        className={`menu-button ${isEditing ? 'active' : ''}`} 
+        onClick={() => setIsEditing(!isEditing)}
+      >
+        {isEditing ? 'Завершить редактирование' : 'Редактировать сайт'}
       </button>
       <button className="menu-button" onClick={() => navigate('/register-group')}>
         Регистрация группы(Telegram)

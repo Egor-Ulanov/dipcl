@@ -12,7 +12,7 @@ import './stylesHomePage.css';
 const CLOUDINARY_UPLOAD_PRESET = 'diplom'; // Вы получите это в настройках Cloudinary
 const CLOUDINARY_CLOUD_NAME = 'dh2qb7atd'; // Ваше cloud name из Cloudinary
 
-function HomePage() {
+function HomePage({ isEditing }) {
   const [logoURL, setLogoURL] = useState("");
   const [description, setDescription] = useState("");
   const [images, setImages] = useState([]);
@@ -137,26 +137,67 @@ function HomePage() {
     }
   };
 
+  const handleDeleteImage = async (indexToDelete) => {
+    try {
+      const updatedImages = images.filter((_, index) => index !== indexToDelete);
+      setImages(updatedImages);
+      await updateDoc(doc(db, "users", user.uid), {
+        images: updatedImages,
+      });
+    } catch (error) {
+      console.error('Ошибка при удалении изображения:', error);
+      alert('Не удалось удалить изображение: ' + error.message);
+    }
+  };
+
+  const handleDeleteLogo = async () => {
+    try {
+      setLogoURL("");
+      await updateDoc(doc(db, "users", user.uid), {
+        logoURL: "",
+      });
+    } catch (error) {
+      console.error('Ошибка при удалении логотипа:', error);
+      alert('Не удалось удалить логотип: ' + error.message);
+    }
+  };
+
   return (
     <div className="homepage-container">
       <main className="main-content">
         <header className="header">
-          {logoURL && (
-            <img
-              src={logoURL}
-              alt="Логотип компании"
-              className="company-logo"
-            />
-          )}
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => setNewLogo(e.target.files[0])}
-            disabled={loading}
-          />
-          <button onClick={handleLogoUpload} disabled={loading}>
-            {loading ? 'Загрузка...' : 'Загрузить логотип'}
-          </button>
+          <div className="logo-container">
+            {logoURL && (
+              <>
+                <img
+                  src={logoURL}
+                  alt="Логотип компании"
+                  className="company-logo"
+                />
+                {isEditing && (
+                  <button 
+                    className="delete-button"
+                    onClick={handleDeleteLogo}
+                  >
+                    Удалить логотип
+                  </button>
+                )}
+              </>
+            )}
+            {isEditing && (
+              <div className="upload-controls">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setNewLogo(e.target.files[0])}
+                  disabled={loading}
+                />
+                <button onClick={handleLogoUpload} disabled={loading}>
+                  {loading ? 'Загрузка...' : 'Загрузить логотип'}
+                </button>
+              </div>
+            )}
+          </div>
         </header>
 
         <section className="about">
@@ -165,28 +206,45 @@ function HomePage() {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows="4"
-            disabled={loading}
+            disabled={!isEditing || loading}
+            placeholder={isEditing ? "Введите описание..." : "Описание отсутствует"}
           />
-          <button onClick={handleDescriptionSave} disabled={loading}>
-            Сохранить описание
-          </button>
+          {isEditing && (
+            <button onClick={handleDescriptionSave} disabled={loading}>
+              Сохранить описание
+            </button>
+          )}
         </section>
 
         <section className="gallery">
           <h2>Наша работа</h2>
-          <input
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={(e) => setNewImages(Array.from(e.target.files))}
-            disabled={loading}
-          />
-          <button onClick={handleImagesUpload} disabled={loading}>
-            {loading ? 'Загрузка...' : 'Загрузить изображения'}
-          </button>
+          {isEditing && (
+            <div className="upload-controls">
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(e) => setNewImages(Array.from(e.target.files))}
+                disabled={loading}
+              />
+              <button onClick={handleImagesUpload} disabled={loading}>
+                {loading ? 'Загрузка...' : 'Загрузить изображения'}
+              </button>
+            </div>
+          )}
           <div className="images">
             {images.map((src, i) => (
-              <img key={i} src={src} alt={`promo${i}`} />
+              <div key={i} className="image-container">
+                <img src={src} alt={`promo${i}`} />
+                {isEditing && (
+                  <button 
+                    className="delete-button"
+                    onClick={() => handleDeleteImage(i)}
+                  >
+                    Удалить
+                  </button>
+                )}
+              </div>
             ))}
           </div>
         </section>

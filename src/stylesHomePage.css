@@ -148,3 +148,50 @@ input[type="file"] {
     height: 250px;
   }
 }
+
+.logo-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.upload-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: center;
+  margin: 1rem 0;
+}
+
+.image-container {
+  position: relative;
+  width: 100%;
+}
+
+.delete-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: rgba(255, 0, 0, 0.8);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.delete-button:hover {
+  background-color: rgba(200, 0, 0, 0.9);
+}
+
+/* Стили для кнопки редактирования в меню */
+.menu-button.active {
+  background-color: #28a745;
+}
+
+.menu-button.active:hover {
+  background-color: #218838;
+}
