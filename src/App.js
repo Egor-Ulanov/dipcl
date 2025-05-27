@@ -6,7 +6,7 @@ import HomePage from './HomePage';
 import Check from './Check';
 import Stats from './Stats';
 import RegisterGroup from './RegisterGroup';
-import Profile from './ProfileSettings';
+import TelegramGroup from './TelegramGroup';
 import Instructions from './Instructions';
 
 function App() {
@@ -27,7 +27,7 @@ function App() {
             <Route path="/check" element={<Check />} />
             <Route path="/stats" element={<Stats />} />
             <Route path="/register-group" element={<RegisterGroup />} />
-            <Route path="/profile" element={<Profile user={user} />} />
+            <Route path="/telegram-group" element={<TelegramGroup />} />
             <Route path="/instructions" element={<Instructions />} />
             <Route path="/" element={<Navigate to="/home" replace />} />
           </Routes>

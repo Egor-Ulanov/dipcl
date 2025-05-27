@@ -1,0 +1,106 @@
+.telegram-group-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.telegram-group-container h1 {
+  color: #333;
+  margin-bottom: 2rem;
+}
+
+.qr-section {
+  margin: 2rem 0;
+}
+
+.qr-code-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.qr-code {
+  max-width: 300px;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.print-button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.print-button:hover {
+  background-color: #0056b3;
+}
+
+.upload-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem;
+  border: 2px dashed #ddd;
+  border-radius: 8px;
+}
+
+.upload-section input[type="file"] {
+  max-width: 300px;
+}
+
+.loading {
+  color: #666;
+  margin-top: 1rem;
+}
+
+.error-message {
+  color: #dc3545;
+  margin-top: 1rem;
+}
+
+.telegram-link {
+  margin-top: 2rem;
+}
+
+.telegram-link p {
+  color: #666;
+  margin-bottom: 1rem;
+}
+
+.telegram-button {
+  display: inline-block;
+  background-color: #0088cc;
+  color: white;
+  text-decoration: none;
+  padding: 1rem 2rem;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.telegram-button:hover {
+  background-color: #006699;
+}
+
+@media (max-width: 768px) {
+  .telegram-group-container {
+    padding: 1rem;
+  }
+
+  .qr-code {
+    max-width: 250px;
+  }
+} 

@@ -30,8 +30,8 @@ function Menu({ setUser, isEditing, setIsEditing }) {
       <button className="menu-button" onClick={() => navigate('/register-group')}>
         Регистрация группы(Telegram)
       </button>
-      <button className="menu-button" onClick={() => navigate('/profile')}>
-        Настройки профиля
+      <button className="menu-button" onClick={() => navigate('/telegram-group')}>
+        QR-код Telegram
       </button>
       <button className="menu-button" onClick={() => navigate('/instructions')}>
         Инструкция
