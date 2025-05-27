@@ -8,7 +8,6 @@ import Stats from './Stats';
 import RegisterGroup from './RegisterGroup';
 import Profile from './ProfileSettings';
 import Instructions from './Instructions';
-import './stylesApp.css';
 
 function App() {
   const [user, setUser] = useState(null);
