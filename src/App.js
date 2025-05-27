@@ -8,8 +8,6 @@ import Stats from './Stats';
 import RegisterGroup from './RegisterGroup';
 import Profile from './ProfileSettings';
 import Instructions from './Instructions';
-import PrivateRoute from './PrivateRoute';
-import LoginPage from './LoginPage';
 import './stylesApp.css';
 
 function App() {
@@ -17,7 +15,7 @@ function App() {
   const [isEditing, setIsEditing] = useState(false);
 
   if (!user) {
-    return <LoginPage setUser={setUser} />;
+    return <Auth setUser={setUser} />;
   }
 
   return (
