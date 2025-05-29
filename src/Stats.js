@@ -14,9 +14,56 @@ function Stats({ user }) {
   const [history, setHistory] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [filteredChecks, setFilteredChecks] = useState([]);
-  const [source, setSource] = useState('telegram'); // или 'personal'
+  const [source, setSource] = useState('telegram');
   const [reviewChartData, setReviewChartData] = useState(null);
   const [error, setError] = useState(null);
+  const [periodType, setPeriodType] = useState('all');
+  const [customStartDate, setCustomStartDate] = useState(new Date());
+  const [customEndDate, setCustomEndDate] = useState(new Date());
+  const [showCustomPeriod, setShowCustomPeriod] = useState(false);
+
+  const filterDataByPeriod = (data, dates) => {
+    const now = new Date();
+    let startDate;
+    
+    switch (periodType) {
+      case 'day':
+        startDate = new Date(now.setDate(now.getDate() - 1));
+        break;
+      case 'week':
+        startDate = new Date(now.setDate(now.getDate() - 7));
+        break;
+      case 'month':
+        startDate = new Date(now.setMonth(now.getMonth() - 1));
+        break;
+      case 'custom':
+        startDate = customStartDate;
+        now.setTime(customEndDate.getTime());
+        break;
+      default:
+        return { dates, data };
+    }
+
+    const filteredDates = {};
+    const filteredData = data.filter(item => {
+      const itemDate = item.date;
+      if (itemDate >= startDate && itemDate <= now) {
+        const dateStr = itemDate.toISOString().split('T')[0];
+        if (!filteredDates[dateStr]) {
+          filteredDates[dateStr] = { safe: 0, toxic: 0 };
+        }
+        if (item.is_safe) {
+          filteredDates[dateStr].safe++;
+        } else {
+          filteredDates[dateStr].toxic++;
+        }
+        return true;
+      }
+      return false;
+    });
+
+    return { dates: filteredDates, data: filteredData };
+  };
 
   useEffect(() => {
     const fetchTelegramChecks = async () => {
@@ -40,7 +87,8 @@ function Stats({ user }) {
           checksSnapshot.forEach((doc) => {
             const check = doc.data();
             if (!check.date) return;
-            const date = check.date.toDate().toISOString().split('T')[0];
+            const checkDate = check.date.toDate();
+            const date = checkDate.toISOString().split('T')[0];
 
             if (!dates[date]) {
               dates[date] = { safe: 0, toxic: 0 };
@@ -65,7 +113,7 @@ function Stats({ user }) {
 
             data.push({
               id: doc.id,
-              date: check.date.toDate(),
+              date: checkDate,
               text: check.text || 'Сообщение',
               author: check.author || 'Неизвестен',
               is_safe: check.result.is_safe,
@@ -74,11 +122,12 @@ function Stats({ user }) {
           });
         }
 
-        setHistory(data);
+        const filtered = filterDataByPeriod(data, dates);
+        setHistory(filtered.data);
 
-        const labels = Object.keys(dates).sort();
-        const safeValues = labels.map((date) => dates[date].safe);
-        const toxicValues = labels.map((date) => dates[date].toxic);
+        const labels = Object.keys(filtered.dates).sort();
+        const safeValues = labels.map((date) => filtered.dates[date].safe);
+        const toxicValues = labels.map((date) => filtered.dates[date].toxic);
 
         setChartData({
           labels,
@@ -100,29 +149,31 @@ function Stats({ user }) {
           ],
         });
 
-        const reviewLabels = Object.keys(reviewDates).sort();
-        const positiveValues = reviewLabels.map((date) => reviewDates[date].positive);
-        const negativeValues = reviewLabels.map((date) => reviewDates[date].negative);
+        if (Object.keys(reviewDates).length > 0) {
+          const reviewLabels = Object.keys(reviewDates).sort();
+          const positiveValues = reviewLabels.map((date) => reviewDates[date].positive);
+          const negativeValues = reviewLabels.map((date) => reviewDates[date].negative);
 
-        setReviewChartData({
-          labels: reviewLabels,
-          datasets: [
-            {
-              label: 'Положительные отзывы',
-              data: positiveValues,
-              backgroundColor: 'rgba(54, 162, 235, 0.2)',
-              borderColor: 'rgba(54, 162, 235, 1)',
-              borderWidth: 1,
-            },
-            {
-              label: 'Отрицательные отзывы',
-              data: negativeValues,
-              backgroundColor: 'rgba(255, 206, 86, 0.2)',
-              borderColor: 'rgba(255, 206, 86, 1)',
-              borderWidth: 1,
-            },
-          ],
-        });
+          setReviewChartData({
+            labels: reviewLabels,
+            datasets: [
+              {
+                label: 'Положительные отзывы',
+                data: positiveValues,
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1,
+              },
+              {
+                label: 'Отрицательные отзывы',
+                data: negativeValues,
+                backgroundColor: 'rgba(255, 206, 86, 0.2)',
+                borderColor: 'rgba(255, 206, 86, 1)',
+                borderWidth: 1,
+              },
+            ],
+          });
+        }
       } catch (error) {
         console.error('Ошибка при загрузке данных:', error);
         setError('Ошибка при загрузке данных');
@@ -145,7 +196,8 @@ function Stats({ user }) {
         checksSnapshot.forEach((doc) => {
           const check = doc.data();
           if (!check.date) return;
-          const date = check.date.toDate().toISOString().split('T')[0];
+          const checkDate = check.date.toDate();
+          const date = checkDate.toISOString().split('T')[0];
 
           if (!dates[date]) {
             dates[date] = { safe: 0, toxic: 0 };
@@ -159,7 +211,7 @@ function Stats({ user }) {
 
           data.push({
             id: doc.id,
-            date: check.date.toDate(),
+            date: checkDate,
             text: check.text || 'Сообщение',
             author: check.author || 'Неизвестен',
             is_safe: check.result.is_safe,
@@ -167,11 +219,12 @@ function Stats({ user }) {
           });
         });
 
-        setHistory(data);
+        const filtered = filterDataByPeriod(data, dates);
+        setHistory(filtered.data);
 
-        const labels = Object.keys(dates).sort();
-        const safeValues = labels.map((date) => dates[date].safe);
-        const toxicValues = labels.map((date) => dates[date].toxic);
+        const labels = Object.keys(filtered.dates).sort();
+        const safeValues = labels.map((date) => filtered.dates[date].safe);
+        const toxicValues = labels.map((date) => filtered.dates[date].toxic);
 
         setChartData({
           labels,
@@ -204,7 +257,7 @@ function Stats({ user }) {
     } else {
       fetchPersonalChecks();
     }
-  }, [source, user?.email]);
+  }, [source, user?.email, periodType, customStartDate, customEndDate]);
 
   useEffect(() => {
     const filtered = history.filter((check) => {
@@ -212,6 +265,12 @@ function Stats({ user }) {
     });
     setFilteredChecks(filtered);
   }, [selectedDate, history]);
+
+  const handlePeriodChange = (e) => {
+    const value = e.target.value;
+    setPeriodType(value);
+    setShowCustomPeriod(value === 'custom');
+  };
 
   if (error) {
     return <p className="error-text">{error}</p>;
@@ -224,10 +283,41 @@ function Stats({ user }) {
   return (
     <div className="stats-container">
       <h2 className="chart-title">Статистика проверок</h2>
-      <select className="stats-select" value={source} onChange={(e) => setSource(e.target.value)}>
-        <option value="telegram">Telegram-группы</option>
-        <option value="personal">Личные проверки</option>
-      </select>
+      <div className="controls">
+        <select className="stats-select" value={source} onChange={(e) => setSource(e.target.value)}>
+          <option value="telegram">Telegram-группы</option>
+          <option value="personal">Личные проверки</option>
+        </select>
+        <select className="period-select" value={periodType} onChange={handlePeriodChange}>
+          <option value="all">Весь период</option>
+          <option value="day">Последний день</option>
+          <option value="week">Последняя неделя</option>
+          <option value="month">Последний месяц</option>
+          <option value="custom">Выбрать период</option>
+        </select>
+      </div>
+      
+      {showCustomPeriod && (
+        <div className="custom-period">
+          <div className="date-picker">
+            <label>От:</label>
+            <input
+              type="date"
+              value={customStartDate.toISOString().split('T')[0]}
+              onChange={(e) => setCustomStartDate(new Date(e.target.value))}
+            />
+          </div>
+          <div className="date-picker">
+            <label>До:</label>
+            <input
+              type="date"
+              value={customEndDate.toISOString().split('T')[0]}
+              onChange={(e) => setCustomEndDate(new Date(e.target.value))}
+            />
+          </div>
+        </div>
+      )}
+
       <Bar
         data={chartData}
         options={{
