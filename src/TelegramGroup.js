@@ -1,13 +1,42 @@
 import React, { useState } from 'react';
-import { storage } from './firebaseConfig';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import './stylesTelegramGroup.css';
+
+const CLOUDINARY_UPLOAD_PRESET = 'diplom';
+const CLOUDINARY_CLOUD_NAME = 'dh2qb7atd';
 
 function TelegramGroup() {
   const [qrImage, setQrImage] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const telegramLink = "https://t.me/+3GKpkziwWYxmMzgy"; 
+  const telegramLink = "https://t.me/+3GKpkziwWYxmMzgy";
+
+  const uploadToCloudinary = async (file) => {
+    console.log('Начинаем загрузку в Cloudinary...');
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+    try {
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+        {
+          method: 'POST',
+          body: formData,
+        }
+      );
+      
+      if (!response.ok) {
+        throw new Error('Ошибка загрузки в Cloudinary: ' + response.statusText);
+      }
+
+      const data = await response.json();
+      console.log('Получен ответ от Cloudinary:', data);
+      return data.secure_url;
+    } catch (error) {
+      console.error('Ошибка при загрузке в Cloudinary:', error);
+      throw error;
+    }
+  };
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
@@ -16,10 +45,7 @@ function TelegramGroup() {
     try {
       setLoading(true);
       setError('');
-      
-      const storageRef = ref(storage, `qr-code/${file.name}`);
-      await uploadBytes(storageRef, file);
-      const url = await getDownloadURL(storageRef);
+      const url = await uploadToCloudinary(file);
       setQrImage(url);
     } catch (error) {
       console.error('Ошибка при загрузке изображения:', error);
@@ -30,32 +56,25 @@ function TelegramGroup() {
   };
 
   const handlePrint = () => {
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>QR-код Telegram группы</title>
-          <style>
-            body {
-              display: flex;
-              justify-content: center;
-              align-items: center;
-              height: 100vh;
-              margin: 0;
-            }
-            img {
-              max-width: 100%;
-              height: auto;
-            }
-          </style>
-        </head>
-        <body>
-          <img src="${qrImage}" alt="QR-код Telegram группы" />
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
-    printWindow.print();
+    if (!qrImage) return;
+    
+    // Создаем временный элемент img для печати
+    const printImg = document.createElement('img');
+    printImg.src = qrImage;
+    printImg.style.maxWidth = '100%';
+    
+    // Сохраняем текущее содержимое body
+    const originalContents = document.body.innerHTML;
+    
+    // Заменяем содержимое body на наше изображение
+    document.body.innerHTML = '';
+    document.body.appendChild(printImg);
+    
+    // Печатаем
+    window.print();
+    
+    // Восстанавливаем оригинальное содержимое
+    document.body.innerHTML = originalContents;
   };
 
   return (
