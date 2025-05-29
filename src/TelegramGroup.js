@@ -1,14 +1,33 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { auth, db } from './firebaseConfig';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import './stylesTelegramGroup.css';
 
 const CLOUDINARY_UPLOAD_PRESET = 'diplom';
 const CLOUDINARY_CLOUD_NAME = 'dh2qb7atd';
 
-function TelegramGroup() {
+function TelegramGroup({ isEditing }) {
   const [qrImage, setQrImage] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const telegramLink = "https://t.me/+3GKpkziwWYxmMzgy";
+
+  const user = auth.currentUser;
+
+  // Загружаем QR-код при монтировании компонента
+  useEffect(() => {
+    const fetchQrCode = async () => {
+      if (user) {
+        const docRef = doc(db, "users", user.uid);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setQrImage(data.qrCodeURL || null);
+        }
+      }
+    };
+    fetchQrCode();
+  }, [user]);
 
   const uploadToCloudinary = async (file) => {
     console.log('Начинаем загрузку в Cloudinary...');
@@ -40,18 +59,38 @@ function TelegramGroup() {
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
-    if (!file) return;
+    if (!file || !user) return;
 
     try {
       setLoading(true);
       setError('');
       const url = await uploadToCloudinary(file);
+      
+      // Сохраняем URL в Firebase
+      await updateDoc(doc(db, "users", user.uid), {
+        qrCodeURL: url,
+      });
+      
       setQrImage(url);
     } catch (error) {
       console.error('Ошибка при загрузке изображения:', error);
       setError('Не удалось загрузить изображение');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteQrCode = async () => {
+    if (!user) return;
+    
+    try {
+      await updateDoc(doc(db, "users", user.uid), {
+        qrCodeURL: null,
+      });
+      setQrImage(null);
+    } catch (error) {
+      console.error('Ошибка при удалении QR-кода:', error);
+      setError('Не удалось удалить QR-код');
     }
   };
 
@@ -89,9 +128,17 @@ function TelegramGroup() {
               <button onClick={handlePrint} className="print-button">
                 Распечатать QR-код
               </button>
+              {isEditing && (
+                <button 
+                  onClick={handleDeleteQrCode}
+                  className="delete-button"
+                >
+                  Удалить QR-код
+                </button>
+              )}
             </div>
           </div>
-        ) : (
+        ) : isEditing ? (
           <div className="upload-section">
             <input
               type="file"
@@ -100,6 +147,10 @@ function TelegramGroup() {
               disabled={loading}
             />
             {loading && <div className="loading">Загрузка...</div>}
+          </div>
+        ) : (
+          <div className="no-qr-code">
+            QR-код пока не загружен
           </div>
         )}
         

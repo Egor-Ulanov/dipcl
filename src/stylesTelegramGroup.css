@@ -48,6 +48,20 @@
   background-color: #0056b3;
 }
 
+.delete-button {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.delete-button:hover {
+  background-color: #c82333;
+}
+
 .upload-section {
   display: flex;
   flex-direction: column;
@@ -70,6 +84,14 @@
 .error-message {
   color: #dc3545;
   margin-top: 1rem;
+}
+
+.no-qr-code {
+  color: #666;
+  padding: 2rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #f8f9fa;
 }
 
 .telegram-link {
@@ -95,6 +117,11 @@
   background-color: #006699;
 }
 
+button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
 @media (max-width: 768px) {
   .telegram-group-container {
     padding: 1rem;
@@ -102,5 +129,9 @@
 
   .qr-code {
     max-width: 250px;
+  }
+
+  .actions {
+    flex-direction: column;
   }
 } 

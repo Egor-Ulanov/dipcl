@@ -27,7 +27,7 @@ function App() {
             <Route path="/check" element={<Check />} />
             <Route path="/stats" element={<Stats />} />
             <Route path="/register-group" element={<RegisterGroup />} />
-            <Route path="/telegram-group" element={<TelegramGroup />} />
+            <Route path="/telegram-group" element={<TelegramGroup isEditing={isEditing} />} />
             <Route path="/instructions" element={<Instructions />} />
             <Route path="/" element={<Navigate to="/home" replace />} />
           </Routes>
