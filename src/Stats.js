@@ -16,178 +16,195 @@ function Stats({ user }) {
   const [filteredChecks, setFilteredChecks] = useState([]);
   const [source, setSource] = useState('telegram'); // или 'personal'
   const [reviewChartData, setReviewChartData] = useState(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchTelegramChecks  = async () => {
-      if (!user?.email) return;
-  
-      const groupsRef = collection(db, 'groups');
-      const groupDocs = await getDocs(query(groupsRef, where('info.admin_email', '==', user.email)));
-      const reviewDates = {};
-      const dates = {};
-      const data = [];
-  
-      for (const groupDoc of groupDocs.docs) {
-        const groupId = groupDoc.id;
-        const checksRef = collection(db, 'groups', groupId, 'checks');
-        const checksSnapshot = await getDocs(checksRef);
-  
-        checksSnapshot.forEach((doc) => {
-          const check = doc.data();
-          if (!check.date) return;
-          const date = check.date.toDate().toISOString().split('T')[0];
-  
-          if (!dates[date]) {
-            dates[date] = { safe: 0, toxic: 0 };
-          }
-  
-          if (check.result.is_safe) {
-            dates[date].safe++;
-          } else {
-            dates[date].toxic++;
-          }
-
-          if (check.review) {
-            if (!reviewDates[date]) {
-              reviewDates[date] = { positive: 0, negative: 0 };
-            }
-            if (check.sentiment === true) {
-              reviewDates[date].positive++;
-            } else if (check.sentiment === false) {
-              reviewDates[date].negative++;
-            }
-          }
-  
-          data.push({
-            id: doc.id,
-            date: check.date.toDate(),
-            text: check.text || 'Сообщение',
-            author: check.author || 'Неизвестен', // <--- добавить
-            is_safe: check.result.is_safe,
-            violations: check.result.violations,
-          });
-        });
+    const fetchTelegramChecks = async () => {
+      if (!user?.email) {
+        setError('Пользователь не авторизован');
+        return;
       }
-  
-      setHistory(data);
-  
-      const labels = Object.keys(dates).sort();
-      const safeValues = labels.map((date) => dates[date].safe);
-      const toxicValues = labels.map((date) => dates[date].toxic);
-  
-      setChartData({
-        labels,
-        datasets: [
-          {
-            label: 'Обычные проверки',
-            data: safeValues,
-            backgroundColor: 'rgba(75, 192, 192, 0.2)',
-            borderColor: 'rgba(75, 192, 192, 1)',
-            borderWidth: 1,
-          },
-          {
-            label: 'Токсичные проверки',
-            data: toxicValues,
-            backgroundColor: 'rgba(255, 99, 132, 0.2)',
-            borderColor: 'rgba(255, 99, 132, 1)',
-            borderWidth: 1,
-          },
-        ],
-      });
 
-      const reviewLabels = Object.keys(reviewDates).sort();
-      const positiveValues = reviewLabels.map((date) => reviewDates[date].positive);
-      const negativeValues = reviewLabels.map((date) => reviewDates[date].negative);
+      try {
+        const groupsRef = collection(db, 'groups');
+        const groupDocs = await getDocs(query(groupsRef, where('info.admin_email', '==', user.email)));
+        const reviewDates = {};
+        const dates = {};
+        const data = [];
 
-      setReviewChartData({
-        labels: reviewLabels,
-        datasets: [
-          {
-            label: 'Положительные отзывы',
-            data: positiveValues,
-            backgroundColor: 'rgba(54, 162, 235, 0.2)',
-            borderColor: 'rgba(54, 162, 235, 1)',
-            borderWidth: 1,
-          },
-          {
-            label: 'Отрицательные отзывы',
-            data: negativeValues,
-            backgroundColor: 'rgba(255, 206, 86, 0.2)',
-            borderColor: 'rgba(255, 206, 86, 1)',
-            borderWidth: 1,
-          },
-        ],
-      });
+        for (const groupDoc of groupDocs.docs) {
+          const groupId = groupDoc.id;
+          const checksRef = collection(db, 'groups', groupId, 'checks');
+          const checksSnapshot = await getDocs(checksRef);
+
+          checksSnapshot.forEach((doc) => {
+            const check = doc.data();
+            if (!check.date) return;
+            const date = check.date.toDate().toISOString().split('T')[0];
+
+            if (!dates[date]) {
+              dates[date] = { safe: 0, toxic: 0 };
+            }
+
+            if (check.result.is_safe) {
+              dates[date].safe++;
+            } else {
+              dates[date].toxic++;
+            }
+
+            if (check.review) {
+              if (!reviewDates[date]) {
+                reviewDates[date] = { positive: 0, negative: 0 };
+              }
+              if (check.sentiment === true) {
+                reviewDates[date].positive++;
+              } else if (check.sentiment === false) {
+                reviewDates[date].negative++;
+              }
+            }
+
+            data.push({
+              id: doc.id,
+              date: check.date.toDate(),
+              text: check.text || 'Сообщение',
+              author: check.author || 'Неизвестен',
+              is_safe: check.result.is_safe,
+              violations: check.result.violations,
+            });
+          });
+        }
+
+        setHistory(data);
+
+        const labels = Object.keys(dates).sort();
+        const safeValues = labels.map((date) => dates[date].safe);
+        const toxicValues = labels.map((date) => dates[date].toxic);
+
+        setChartData({
+          labels,
+          datasets: [
+            {
+              label: 'Обычные проверки',
+              data: safeValues,
+              backgroundColor: 'rgba(75, 192, 192, 0.2)',
+              borderColor: 'rgba(75, 192, 192, 1)',
+              borderWidth: 1,
+            },
+            {
+              label: 'Токсичные проверки',
+              data: toxicValues,
+              backgroundColor: 'rgba(255, 99, 132, 0.2)',
+              borderColor: 'rgba(255, 99, 132, 1)',
+              borderWidth: 1,
+            },
+          ],
+        });
+
+        const reviewLabels = Object.keys(reviewDates).sort();
+        const positiveValues = reviewLabels.map((date) => reviewDates[date].positive);
+        const negativeValues = reviewLabels.map((date) => reviewDates[date].negative);
+
+        setReviewChartData({
+          labels: reviewLabels,
+          datasets: [
+            {
+              label: 'Положительные отзывы',
+              data: positiveValues,
+              backgroundColor: 'rgba(54, 162, 235, 0.2)',
+              borderColor: 'rgba(54, 162, 235, 1)',
+              borderWidth: 1,
+            },
+            {
+              label: 'Отрицательные отзывы',
+              data: negativeValues,
+              backgroundColor: 'rgba(255, 206, 86, 0.2)',
+              borderColor: 'rgba(255, 206, 86, 1)',
+              borderWidth: 1,
+            },
+          ],
+        });
+      } catch (error) {
+        console.error('Ошибка при загрузке данных:', error);
+        setError('Ошибка при загрузке данных');
+      }
     };
 
-    const fetchPersonalChecks  = async () => {
-      if (!user?.email) return;
-      const dates = {};
-      const data = [];
+    const fetchPersonalChecks = async () => {
+      if (!user?.email) {
+        setError('Пользователь не авторизован');
+        return;
+      }
+
+      try {
+        const dates = {};
+        const data = [];
 
         const checksRef = collection(db, 'checks');
         const checksSnapshot = await getDocs(query(checksRef, where('email', '==', user.email)));
-  
+
         checksSnapshot.forEach((doc) => {
           const check = doc.data();
           if (!check.date) return;
           const date = check.date.toDate().toISOString().split('T')[0];
-  
+
           if (!dates[date]) {
             dates[date] = { safe: 0, toxic: 0 };
           }
-  
+
           if (check.result.is_safe) {
             dates[date].safe++;
           } else {
             dates[date].toxic++;
           }
-  
+
           data.push({
             id: doc.id,
             date: check.date.toDate(),
             text: check.text || 'Сообщение',
-            author: check.author || 'Неизвестен', // <--- добавить
+            author: check.author || 'Неизвестен',
             is_safe: check.result.is_safe,
             violations: check.result.violations,
           });
         });
-      
-  
-      setHistory(data);
-  
-      const labels = Object.keys(dates).sort();
-      const safeValues = labels.map((date) => dates[date].safe);
-      const toxicValues = labels.map((date) => dates[date].toxic);
-  
-      setChartData({
-        labels,
-        datasets: [
-          {
-            label: 'Обычные проверки',
-            data: safeValues,
-            backgroundColor: 'rgba(75, 192, 192, 0.2)',
-            borderColor: 'rgba(75, 192, 192, 1)',
-            borderWidth: 1,
-          },
-          {
-            label: 'Токсичные проверки',
-            data: toxicValues,
-            backgroundColor: 'rgba(255, 99, 132, 0.2)',
-            borderColor: 'rgba(255, 99, 132, 1)',
-            borderWidth: 1,
-          },
-        ],
-      });
+
+        setHistory(data);
+
+        const labels = Object.keys(dates).sort();
+        const safeValues = labels.map((date) => dates[date].safe);
+        const toxicValues = labels.map((date) => dates[date].toxic);
+
+        setChartData({
+          labels,
+          datasets: [
+            {
+              label: 'Обычные проверки',
+              data: safeValues,
+              backgroundColor: 'rgba(75, 192, 192, 0.2)',
+              borderColor: 'rgba(75, 192, 192, 1)',
+              borderWidth: 1,
+            },
+            {
+              label: 'Токсичные проверки',
+              data: toxicValues,
+              backgroundColor: 'rgba(255, 99, 132, 0.2)',
+              borderColor: 'rgba(255, 99, 132, 1)',
+              borderWidth: 1,
+            },
+          ],
+        });
+      } catch (error) {
+        console.error('Ошибка при загрузке данных:', error);
+        setError('Ошибка при загрузке данных');
+      }
     };
 
+    setError(null);
     if (source === 'telegram') {
       fetchTelegramChecks();
     } else {
       fetchPersonalChecks();
     }
-  }, [source, user.email]);
-  
+  }, [source, user?.email]);
 
   useEffect(() => {
     const filtered = history.filter((check) => {
@@ -195,6 +212,10 @@ function Stats({ user }) {
     });
     setFilteredChecks(filtered);
   }, [selectedDate, history]);
+
+  if (error) {
+    return <p className="error-text">{error}</p>;
+  }
 
   if (!chartData) {
     return <p className="loading-text">Загрузка данных...</p>;

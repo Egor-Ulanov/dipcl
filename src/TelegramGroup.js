@@ -3,25 +3,30 @@ import { auth, db } from './firebaseConfig';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import './stylesTelegramGroup.css';
 
+// Константы для работы с Cloudinary
 const CLOUDINARY_UPLOAD_PRESET = 'diplom';
 const CLOUDINARY_CLOUD_NAME = 'dh2qb7atd';
 
 function TelegramGroup({ isEditing }) {
-  const [qrImage, setQrImage] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const telegramLink = "https://t.me/+3GKpkziwWYxmMzgy";
+  // Состояния компонента
+  const [qrImage, setQrImage] = useState(null);     // URL QR-кода
+  const [loading, setLoading] = useState(false);    // Состояние загрузки
+  const [error, setError] = useState('');           // Сообщение об ошибке
+  const telegramLink = "https://t.me/+3GKpkziwWYxmMzgy";  // Ссылка на группу
 
+  // Получаем текущего пользователя
   const user = auth.currentUser;
 
-  // Загружаем QR-код при монтировании компонента
+  // Эффект для загрузки QR-кода при монтировании компонента
   useEffect(() => {
     const fetchQrCode = async () => {
       if (user) {
+        // Получаем документ пользователя из Firestore
         const docRef = doc(db, "users", user.uid);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
           const data = docSnap.data();
+          // Устанавливаем URL QR-кода из данных пользователя
           setQrImage(data.qrCodeURL || null);
         }
       }
@@ -29,6 +34,7 @@ function TelegramGroup({ isEditing }) {
     fetchQrCode();
   }, [user]);
 
+  // Функция для загрузки изображения в Cloudinary
   const uploadToCloudinary = async (file) => {
     console.log('Начинаем загрузку в Cloudinary...');
     const formData = new FormData();
@@ -36,6 +42,7 @@ function TelegramGroup({ isEditing }) {
     formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
 
     try {
+      // Отправляем запрос на загрузку в Cloudinary
       const response = await fetch(
         `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
         {
@@ -50,13 +57,14 @@ function TelegramGroup({ isEditing }) {
 
       const data = await response.json();
       console.log('Получен ответ от Cloudinary:', data);
-      return data.secure_url;
+      return data.secure_url;  // Возвращаем URL загруженного изображения
     } catch (error) {
       console.error('Ошибка при загрузке в Cloudinary:', error);
       throw error;
     }
   };
 
+  // Обработчик загрузки изображения
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file || !user) return;
@@ -64,6 +72,7 @@ function TelegramGroup({ isEditing }) {
     try {
       setLoading(true);
       setError('');
+      // Загружаем файл в Cloudinary
       const url = await uploadToCloudinary(file);
       
       // Сохраняем URL в Firebase
@@ -71,6 +80,7 @@ function TelegramGroup({ isEditing }) {
         qrCodeURL: url,
       });
       
+      // Обновляем локальное состояние
       setQrImage(url);
     } catch (error) {
       console.error('Ошибка при загрузке изображения:', error);
@@ -80,13 +90,16 @@ function TelegramGroup({ isEditing }) {
     }
   };
 
+  // Обработчик удаления QR-кода
   const handleDeleteQrCode = async () => {
     if (!user) return;
     
     try {
+      // Удаляем URL QR-кода из Firebase
       await updateDoc(doc(db, "users", user.uid), {
         qrCodeURL: null,
       });
+      // Очищаем локальное состояние
       setQrImage(null);
     } catch (error) {
       console.error('Ошибка при удалении QR-кода:', error);
@@ -94,6 +107,7 @@ function TelegramGroup({ isEditing }) {
     }
   };
 
+  // Обработчик печати QR-кода
   const handlePrint = () => {
     if (!qrImage) return;
     
@@ -109,7 +123,7 @@ function TelegramGroup({ isEditing }) {
     document.body.innerHTML = '';
     document.body.appendChild(printImg);
     
-    // Печатаем
+    // Вызываем диалог печати
     window.print();
     
     // Восстанавливаем оригинальное содержимое
@@ -122,6 +136,7 @@ function TelegramGroup({ isEditing }) {
       
       <div className="qr-section">
         {qrImage ? (
+          // Если QR-код загружен, показываем его и кнопки управления
           <div className="qr-code-container">
             <img src={qrImage} alt="QR-код Telegram группы" className="qr-code" />
             <div className="actions">
@@ -139,6 +154,7 @@ function TelegramGroup({ isEditing }) {
             </div>
           </div>
         ) : isEditing ? (
+          // Если режим редактирования и QR-код не загружен, показываем форму загрузки
           <div className="upload-section">
             <input
               type="file"
@@ -149,14 +165,17 @@ function TelegramGroup({ isEditing }) {
             {loading && <div className="loading">Загрузка...</div>}
           </div>
         ) : (
+          // Если не режим редактирования и QR-код не загружен
           <div className="no-qr-code">
             QR-код пока не загружен
           </div>
         )}
         
+        {/* Показываем сообщение об ошибке, если есть */}
         {error && <div className="error-message">{error}</div>}
       </div>
 
+      {/* Секция с прямой ссылкой на Telegram */}
       <div className="telegram-link">
         <p>Или присоединяйтесь напрямую по ссылке:</p>
         <a 

@@ -24,9 +24,9 @@ function App() {
         <div className="content-container">
           <Routes>
             <Route path="/home" element={<HomePage isEditing={isEditing} />} />
-            <Route path="/check" element={<Check />} />
-            <Route path="/stats" element={<Stats />} />
-            <Route path="/register-group" element={<RegisterGroup />} />
+            <Route path="/check" element={<Check user={user} />} />
+            <Route path="/stats" element={<Stats user={user} />} />
+            <Route path="/register-group" element={<RegisterGroup user={user} />} />
             <Route path="/telegram-group" element={<TelegramGroup isEditing={isEditing} />} />
             <Route path="/instructions" element={<Instructions />} />
             <Route path="/" element={<Navigate to="/home" replace />} />
