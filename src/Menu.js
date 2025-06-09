@@ -36,6 +36,9 @@ function Menu({ setUser, isEditing, setIsEditing }) {
       <button className="menu-button" onClick={() => navigate('/instructions')}>
         Инструкция
       </button>
+      <button className="menu-button" onClick={() => navigate('/change-credentials')}>
+        Сменить логин/пароль
+      </button>
       <button className="menu-button logout" onClick={handleLogout}>
         Выйти
       </button>

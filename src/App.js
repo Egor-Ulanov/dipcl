@@ -8,6 +8,7 @@ import Stats from './Stats';
 import RegisterGroup from './RegisterGroup';
 import TelegramGroup from './TelegramGroup';
 import Instructions from './Instructions';
+import ChangeCredentials from './components/ChangeCredentials';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -29,6 +30,7 @@ function App() {
             <Route path="/register-group" element={<RegisterGroup user={user} />} />
             <Route path="/telegram-group" element={<TelegramGroup isEditing={isEditing} />} />
             <Route path="/instructions" element={<Instructions />} />
+            <Route path="/change-credentials" element={<ChangeCredentials />} />
             <Route path="/" element={<Navigate to="/home" replace />} />
           </Routes>
         </div>
