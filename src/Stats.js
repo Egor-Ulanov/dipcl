@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
-import Calendar from 'react-calendar';
-import 'react-calendar/dist/Calendar.css';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from './firebaseConfig';
 import './styleStats.css';
@@ -12,8 +10,6 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 function Stats({ user }) {
   const [chartData, setChartData] = useState(null);
   const [history, setHistory] = useState([]);
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [filteredChecks, setFilteredChecks] = useState([]);
   const [source, setSource] = useState('telegram');
   const [reviewChartData, setReviewChartData] = useState(null);
   const [error, setError] = useState(null);
@@ -311,13 +307,6 @@ function Stats({ user }) {
     }
   }, [source, user?.email, periodType, customStartDate, customEndDate, selectedMaster]);
 
-  useEffect(() => {
-    const filtered = history.filter((check) => {
-      return check.date.toDateString() === selectedDate.toDateString();
-    });
-    setFilteredChecks(filtered);
-  }, [selectedDate, history]);
-
   const handlePeriodChange = (e) => {
     const value = e.target.value;
     setPeriodType(value);
@@ -399,36 +388,34 @@ function Stats({ user }) {
           },
         }}
       />
-      <div className="stats-content">
-        <Calendar
-          onChange={setSelectedDate}
-          value={selectedDate}
-          locale="ru-RU"
-        />
-        <div className="checks-history">
-          <h3>Проверки за {selectedDate.toLocaleDateString()}</h3>
-          {filteredChecks.length === 0 ? (
-            <p>Нет проверок за выбранный день.</p>
-          ) : (
-            <ul>
-              {filteredChecks.map((check) => (
-                <li key={check.id}>
-                  <p><strong>Автор:</strong> {check.author || 'Неизвестен'}</p>
-                  <p><strong>Текст:</strong> {check.text}</p>
-                  <p>
-                    <strong>Результат:</strong>{' '}
-                    {check.is_safe ? 'Запрещенного контента не обнаружено' : 'Обнаружены нарушения'}
+
+      <div className="checks-history">
+        <h3>Список проверок за выбранный период</h3>
+        {history.length === 0 ? (
+          <p>Нет проверок за выбранный период.</p>
+        ) : (
+          <ul>
+            {history.map((check) => (
+              <li key={check.id} className={`check-item ${check.is_safe ? 'safe' : 'toxic'}`}>
+                <div className="check-header">
+                  <span className="check-date">{check.date.toLocaleDateString()}</span>
+                  {check.master && <span className="check-master">Мастер: {check.master}</span>}
+                </div>
+                <p className="check-text"><strong>Текст:</strong> {check.text}</p>
+                <p className="check-author"><strong>Автор:</strong> {check.author}</p>
+                <p className="check-status">
+                  <strong>Результат:</strong>{' '}
+                  {check.is_safe ? 'Запрещенного контента не обнаружено' : 'Обнаружены нарушения'}
+                </p>
+                {check.violations && check.violations.length > 0 && (
+                  <p className="check-violations">
+                    <strong>Нарушения:</strong> {check.violations.join(', ')}
                   </p>
-                  {check.violations && check.violations.length > 0 && (
-                    <p>
-                      <strong>Нарушения:</strong> {check.violations.join(', ')}
-                    </p>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );
