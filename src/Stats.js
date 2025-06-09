@@ -19,6 +19,7 @@ function Stats({ user }) {
   const [showCustomPeriod, setShowCustomPeriod] = useState(false);
   const [selectedMaster, setSelectedMaster] = useState('all');
   const [masters, setMasters] = useState(['all']);
+  const [violators, setViolators] = useState([]);
 
   const filterDataByPeriod = (data, dates) => {
     if (periodType === 'all') {
@@ -125,6 +126,39 @@ function Stats({ user }) {
     return { dates: filteredDates, data: filteredData };
   };
 
+  const calculateViolators = (data) => {
+    const violatorsMap = new Map();
+
+    data.forEach(check => {
+      const authorId = check.author;
+      if (!violatorsMap.has(authorId)) {
+        violatorsMap.set(authorId, {
+          author: authorId,
+          totalMessages: 0,
+          toxicMessages: 0,
+          spamMessages: 0,
+          violationRate: 0
+        });
+      }
+
+      const stats = violatorsMap.get(authorId);
+      stats.totalMessages++;
+
+      if (!check.is_safe) {
+        stats.toxicMessages++;
+      }
+      if (check.spam) {
+        stats.spamMessages++;
+      }
+
+      stats.violationRate = ((stats.toxicMessages + stats.spamMessages) / stats.totalMessages) * 100;
+    });
+
+    return Array.from(violatorsMap.values())
+      .sort((a, b) => b.violationRate - a.violationRate)
+      .slice(0, 10); // Топ 10 нарушителей
+  };
+
   useEffect(() => {
     const fetchTelegramChecks = async () => {
       if (!user?.email) {
@@ -195,6 +229,10 @@ function Stats({ user }) {
         let filtered = filterDataByPeriod(data, dates);
         filtered = filterDataByMaster(filtered.data, filtered.dates);
         setHistory(filtered.data);
+
+        // Вычисляем статистику нарушителей
+        const violatorsStats = calculateViolators(filtered.data);
+        setViolators(violatorsStats);
 
         const labels = Object.keys(filtered.dates).sort();
         const safeValues = labels.map((date) => filtered.dates[date].safe);
@@ -396,21 +434,61 @@ function Stats({ user }) {
         </div>
       )}
 
-      <Bar
-        data={chartData}
-        options={{
-          responsive: true,
-          plugins: {
-            legend: {
-              position: 'top',
-            },
-            title: {
-              display: true,
-              text: 'Количество проверок по датам',
-            },
-          },
-        }}
-      />
+      <div className="stats-content">
+        <div className="chart-section">
+          <Bar
+            data={chartData}
+            options={{
+              responsive: true,
+              plugins: {
+                legend: {
+                  position: 'top',
+                },
+                title: {
+                  display: true,
+                  text: 'Количество проверок по датам',
+                },
+              },
+            }}
+          />
+        </div>
+
+        <div className="violators-section">
+          <h3>Топ нарушителей</h3>
+          {violators.length > 0 ? (
+            <div className="violators-list">
+              {violators.map((violator, index) => (
+                <div key={violator.author} className="violator-item">
+                  <div className="violator-header">
+                    <span className="violator-rank">#{index + 1}</span>
+                    <span className="violator-name">{violator.author.split('__')[0]}</span>
+                  </div>
+                  <div className="violator-stats">
+                    <div className="stat-item">
+                      <span className="stat-label">Всего сообщений:</span>
+                      <span className="stat-value">{violator.totalMessages}</span>
+                    </div>
+                    <div className="stat-item">
+                      <span className="stat-label">Токсичных:</span>
+                      <span className="stat-value">{violator.toxicMessages}</span>
+                    </div>
+                    <div className="stat-item">
+                      <span className="stat-label">Спам:</span>
+                      <span className="stat-value">{violator.spamMessages}</span>
+                    </div>
+                    <div className="stat-item">
+                      <span className="stat-label">Процент нарушений:</span>
+                      <span className="stat-value">{violator.violationRate.toFixed(1)}%</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p>Нет данных о нарушениях</p>
+          )}
+        </div>
+      </div>
 
       <div className="checks-history">
         <h3>Список проверок за выбранный период</h3>
