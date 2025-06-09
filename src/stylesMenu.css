@@ -1,35 +1,139 @@
-.menu-container {
+.navbar {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 10px 20px;
+  justify-content: space-between;
+  padding: 0 24px;
+  height: 64px;
+  background: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
 }
 
-.menu-button {
-  padding: 10px 20px;
-  margin: 0 5px;
-  font-size: 16px;
-  color: white;
-  background: #1976d2;
-  border: none;
-  border-radius: 5px;
+.navbar-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   cursor: pointer;
-  transition: background 0.3s, transform 0.2s;
+  padding: 8px;
+  border-radius: 8px;
+  transition: background-color 0.2s;
 }
 
-.menu-button:hover {
-  background: #1565c0;
-  transform: scale(1.05);
+.navbar-logo:hover {
+  background-color: #f5f5f5;
 }
 
-.menu-button:active {
-  transform: scale(1);
+.logo-icon {
+  width: 32px;
+  height: 32px;
+  color: #2196f3;
 }
 
-.menu-button.logout {
-  background: #d32f2f;
+.logo-text {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
 }
 
-.menu-button.logout:hover {
-  background: #c62828;
+.navbar-links {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.nav-link {
+  padding: 8px 16px;
+  color: #666;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.nav-link:hover {
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+.nav-link.active {
+  background-color: #e3f2fd;
+  color: #2196f3;
+}
+
+.navbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.nav-link.logout {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #f44336;
+  padding: 8px 16px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.nav-link.logout:hover {
+  background-color: #fee8e7;
+}
+
+.logout-icon {
+  width: 20px;
+  height: 20px;
+  color: currentColor;
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 1024px) {
+  .navbar {
+    padding: 0 16px;
+  }
+
+  .navbar-links {
+    display: none;
+    position: fixed;
+    top: 64px;
+    left: 0;
+    right: 0;
+    background: white;
+    flex-direction: column;
+    padding: 16px;
+    gap: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  .navbar-links.show {
+    display: flex;
+  }
+
+  .nav-link {
+    width: 100%;
+    text-align: left;
+  }
+}
+
+/* Добавляем кнопку меню для мобильных устройств */
+.menu-toggle {
+  display: none;
+  background: none;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+}
+
+@media (max-width: 1024px) {
+  .menu-toggle {
+    display: block;
+  }
 }

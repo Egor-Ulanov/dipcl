@@ -9,6 +9,7 @@ import RegisterGroup from './RegisterGroup';
 import TelegramGroup from './TelegramGroup';
 import Instructions from './Instructions';
 import ChangeCredentials from './components/ChangeCredentials';
+import './App.css';
 
 function App() {
   const [user, setUser] = useState(null);

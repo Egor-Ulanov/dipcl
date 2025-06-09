@@ -55,7 +55,6 @@ function Instructions() {
               <ul>
                 <li>Изменение личных данных</li>
                 <li>Смена пароля</li>
-                <li>Управление уведомлениями</li>
               </ul>
             </div>
 
@@ -67,8 +66,8 @@ function Instructions() {
               <p>Работа с группами Telegram и их настройками.</p>
               <ul>
                 <li>Регистрация новых групп</li>
-                <li>Настройка фильтрации</li>
-                <li>Управление доступом</li>
+                <li>Анализ результатов проверок</li>
+                <li>Список нарушителей</li>
               </ul>
             </div>
           </div>
@@ -98,20 +97,7 @@ function Instructions() {
             </div>
 
             <div className="step">
-              <div className="step-number">2</div>
-              <div className="step-content">
-                <h3>Настройка фильтрации</h3>
-                <p>В разделе "Редактировать сайт" настройте параметры проверки:</p>
-                <ol>
-                  <li>Выберите типы проверяемого контента</li>
-                  <li>Настройте уровень строгости фильтрации</li>
-                  <li>Укажите действия при обнаружении нарушений</li>
-                </ol>
-              </div>
-            </div>
-
-            <div className="step">
-              <div className="step-number">3</div>
+              <div className="step-number">2/div>
               <div className="step-content">
                 <h3>Мониторинг и статистика</h3>
                 <p>Используйте раздел "Статистика" для отслеживания результатов:</p>
