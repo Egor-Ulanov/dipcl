@@ -1,11 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
-import { Bar } from 'react-chartjs-2';
+import { Bar, Line, Pie, Doughnut } from 'react-chartjs-2';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from './firebaseConfig';
 import './styleStats.css';
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 function Stats({ user }) {
   const [chartData, setChartData] = useState(null);
@@ -20,6 +30,7 @@ function Stats({ user }) {
   const [selectedMaster, setSelectedMaster] = useState('all');
   const [masters, setMasters] = useState(['all']);
   const [violators, setViolators] = useState([]);
+  const [chartType, setChartType] = useState('bar');
 
   const filterDataByPeriod = (data, dates) => {
     if (periodType === 'all') {
@@ -159,6 +170,82 @@ function Stats({ user }) {
       .slice(0, 10); // Топ 10 нарушителей
   };
 
+  const prepareChartData = (labels, safeCount, unsafeCount) => {
+    return {
+      labels,
+      datasets: [
+        {
+          label: 'Безопасные',
+          data: safeCount,
+          backgroundColor: 'rgba(75, 192, 192, 0.5)',
+          borderColor: 'rgba(75, 192, 192, 1)',
+          borderWidth: 1,
+        },
+        {
+          label: 'Токсичные',
+          data: unsafeCount,
+          backgroundColor: 'rgba(255, 99, 132, 0.5)',
+          borderColor: 'rgba(255, 99, 132, 1)',
+          borderWidth: 1,
+        },
+      ],
+    };
+  };
+
+  const prepareReviewChartData = (labels, reviews) => {
+    if (chartType === 'pie' || chartType === 'doughnut') {
+      const totalReviews = reviews.reduce((acc, curr) => acc + curr, 0);
+      return {
+        labels: ['Положительные', 'Нейтральные', 'Негативные'],
+        datasets: [{
+          data: [
+            reviews.filter(r => r > 0).length,
+            reviews.filter(r => r === 0).length,
+            reviews.filter(r => r < 0).length,
+          ],
+          backgroundColor: [
+            'rgba(75, 192, 192, 0.5)',
+            'rgba(255, 206, 86, 0.5)',
+            'rgba(255, 99, 132, 0.5)',
+          ],
+          borderColor: [
+            'rgba(75, 192, 192, 1)',
+            'rgba(255, 206, 86, 1)',
+            'rgba(255, 99, 132, 1)',
+          ],
+          borderWidth: 1,
+        }],
+      };
+    }
+
+    return {
+      labels,
+      datasets: [
+        {
+          label: 'Положительные',
+          data: reviews.map(r => r > 0 ? 1 : 0),
+          backgroundColor: 'rgba(75, 192, 192, 0.5)',
+          borderColor: 'rgba(75, 192, 192, 1)',
+          borderWidth: 1,
+        },
+        {
+          label: 'Нейтральные',
+          data: reviews.map(r => r === 0 ? 1 : 0),
+          backgroundColor: 'rgba(255, 206, 86, 0.5)',
+          borderColor: 'rgba(255, 206, 86, 1)',
+          borderWidth: 1,
+        },
+        {
+          label: 'Негативные',
+          data: reviews.map(r => r < 0 ? 1 : 0),
+          backgroundColor: 'rgba(255, 99, 132, 0.5)',
+          borderColor: 'rgba(255, 99, 132, 1)',
+          borderWidth: 1,
+        },
+      ],
+    };
+  };
+
   useEffect(() => {
     const fetchTelegramChecks = async () => {
       if (!user?.email) {
@@ -235,54 +322,19 @@ function Stats({ user }) {
         setViolators(violatorsStats);
 
         const labels = Object.keys(filtered.dates).sort();
-        const safeValues = labels.map((date) => filtered.dates[date].safe);
-        const toxicValues = labels.map((date) => filtered.dates[date].toxic);
+        const safeCount = labels.map(date => 
+          filtered.dates[date].filter(check => check.is_safe).length
+        );
+        const unsafeCount = labels.map(date => 
+          filtered.dates[date].filter(check => !check.is_safe).length
+        );
 
-        setChartData({
-          labels,
-          datasets: [
-            {
-              label: 'Обычные проверки',
-              data: safeValues,
-              backgroundColor: 'rgba(75, 192, 192, 0.2)',
-              borderColor: 'rgba(75, 192, 192, 1)',
-              borderWidth: 1,
-            },
-            {
-              label: 'Токсичные проверки',
-              data: toxicValues,
-              backgroundColor: 'rgba(255, 99, 132, 0.2)',
-              borderColor: 'rgba(255, 99, 132, 1)',
-              borderWidth: 1,
-            },
-          ],
-        });
+        const reviews = labels.map(date => 
+          filtered.dates[date].map(check => check.sentiment)
+        ).flat();
 
-        if (Object.keys(reviewDates).length > 0) {
-          const reviewLabels = Object.keys(reviewDates).sort();
-          const positiveValues = reviewLabels.map((date) => reviewDates[date].positive);
-          const negativeValues = reviewLabels.map((date) => reviewDates[date].negative);
-
-          setReviewChartData({
-            labels: reviewLabels,
-            datasets: [
-              {
-                label: 'Положительные отзывы',
-                data: positiveValues,
-                backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                borderColor: 'rgba(54, 162, 235, 1)',
-                borderWidth: 1,
-              },
-              {
-                label: 'Отрицательные отзывы',
-                data: negativeValues,
-                backgroundColor: 'rgba(255, 206, 86, 0.2)',
-                borderColor: 'rgba(255, 206, 86, 1)',
-                borderWidth: 1,
-              },
-            ],
-          });
-        }
+        setChartData(prepareChartData(labels, safeCount, unsafeCount));
+        setReviewChartData(prepareReviewChartData(labels, reviews));
       } catch (error) {
         console.error('Ошибка при загрузке данных:', error);
         setError('Ошибка при загрузке данных');
@@ -382,6 +434,13 @@ function Stats({ user }) {
     return <p className="loading-text">Загрузка данных...</p>;
   }
 
+  const ChartComponent = {
+    bar: Bar,
+    line: Line,
+    pie: Pie,
+    doughnut: Doughnut,
+  }[chartType];
+
   return (
     <div className="stats-container">
       <h2 className="chart-title">Статистика проверок</h2>
@@ -411,6 +470,19 @@ function Stats({ user }) {
             ))
           }
         </select>
+        <div className="chart-type-selector">
+          <label>Тип графика:</label>
+          <select 
+            value={chartType} 
+            onChange={(e) => setChartType(e.target.value)}
+            className="chart-type-select"
+          >
+            <option value="bar">Столбчатая диаграмма</option>
+            <option value="line">Линейный график</option>
+            <option value="pie">Круговая диаграмма</option>
+            <option value="doughnut">Кольцевая диаграмма</option>
+          </select>
+        </div>
       </div>
       
       {showCustomPeriod && (
@@ -435,22 +507,48 @@ function Stats({ user }) {
       )}
 
       <div className="stats-content">
-        <div className="chart-section">
-          <Bar
-            data={chartData}
-            options={{
-              responsive: true,
-              plugins: {
-                legend: {
-                  position: 'top',
+        <div className="charts-container">
+          <div className="chart-section">
+            <h3>Токсичность сообщений</h3>
+            {chartData && <ChartComponent
+              data={chartData}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    position: 'top',
+                  },
                 },
-                title: {
-                  display: true,
-                  text: 'Количество проверок по датам',
+                scales: chartType !== 'pie' && chartType !== 'doughnut' ? {
+                  y: {
+                    beginAtZero: true,
+                  },
+                } : undefined,
+              }}
+            />}
+          </div>
+
+          <div className="chart-section">
+            <h3>Отзывы</h3>
+            {reviewChartData && <ChartComponent
+              data={reviewChartData}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    position: 'top',
+                  },
                 },
-              },
-            }}
-          />
+                scales: chartType !== 'pie' && chartType !== 'doughnut' ? {
+                  y: {
+                    beginAtZero: true,
+                  },
+                } : undefined,
+              }}
+            />}
+          </div>
         </div>
 
         <div className="violators-section">
