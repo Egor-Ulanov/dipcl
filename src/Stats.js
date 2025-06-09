@@ -266,6 +266,40 @@ function Stats({ user }) {
         }
         const data = await response.json();
 
+        // Группируем данные по датам
+        const dates = data.reduce((acc, check) => {
+          const date = new Date(check.date).toISOString().split('T')[0];
+          if (!acc[date]) {
+            acc[date] = {
+              safe: 0,
+              toxic: 0,
+              positive: 0,
+              neutral: 0,
+              negative: 0,
+              checks: []
+            };
+          }
+          
+          // Подсчитываем статистику
+          if (check.is_safe) {
+            acc[date].safe++;
+          } else {
+            acc[date].toxic++;
+          }
+
+          // Подсчитываем отзывы
+          if (check.sentiment > 0) {
+            acc[date].positive++;
+          } else if (check.sentiment < 0) {
+            acc[date].negative++;
+          } else {
+            acc[date].neutral++;
+          }
+
+          acc[date].checks.push(check);
+          return acc;
+        }, {});
+
         let filtered = filterDataByPeriod(data, dates);
         filtered = filterDataByMaster(filtered.data, filtered.dates);
         setHistory(filtered.data);
