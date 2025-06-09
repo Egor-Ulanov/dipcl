@@ -26,7 +26,7 @@ function Auth({ setUser }) {
         const querySnapshot = await getDocs(q);
 
         if (querySnapshot.empty) {
-          throw new Error('Неверный логин или пароль');
+          throw new Error('Логин не найден. Проверьте данные.');
         }
 
         const userDoc = querySnapshot.docs[0];
@@ -56,12 +56,7 @@ function Auth({ setUser }) {
         setUser(user);
       }
     } catch (error) {
-      console.error('Ошибка аутентификации:', error);
-      setError(
-        error.code === 'auth/invalid-credential'
-          ? 'Неверный логин или пароль'
-          : error.message
-      );
+      setError(error.message);
     } finally {
       setLoading(false);
     }
@@ -100,14 +95,7 @@ function Auth({ setUser }) {
           required
         />
         <button type="submit" disabled={loading}>
-          {loading ? (
-            <>
-              <div className="loading-spinner"></div>
-              {isLogin ? 'Вход...' : 'Регистрация...'}
-            </>
-          ) : (
-            isLogin ? 'Войти' : 'Зарегистрироваться'
-          )}
+          {loading ? 'Загрузка...' : isLogin ? 'Войти' : 'Зарегистрироваться'}
         </button>
       </form>
       <button 
@@ -115,9 +103,6 @@ function Auth({ setUser }) {
         onClick={() => {
           setIsLogin(!isLogin);
           setError('');
-          setLogin('');
-          setPassword('');
-          setEmail('');
         }}
         disabled={loading}
       >
