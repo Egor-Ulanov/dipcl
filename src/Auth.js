@@ -21,13 +21,12 @@ function Auth({ setUser }) {
 
     try {
       if (isLogin) {
-        // Логика входа
         const usersRef = collection(db, 'users');
         const q = query(usersRef, where('login', '==', login));
         const querySnapshot = await getDocs(q);
 
         if (querySnapshot.empty) {
-          throw new Error('Логин не найден. Проверьте данные.');
+          throw new Error('Неверный логин или пароль');
         }
 
         const userDoc = querySnapshot.docs[0];
@@ -37,7 +36,6 @@ function Auth({ setUser }) {
         const userCredential = await signInWithEmailAndPassword(auth, userEmail, password);
         setUser(userCredential.user);
       } else {
-        // Проверка существующего логина
         const usersRef = collection(db, 'users');
         const q = query(usersRef, where('login', '==', login));
         const querySnapshot = await getDocs(q);
@@ -46,7 +44,6 @@ function Auth({ setUser }) {
           throw new Error('Такой логин уже существует');
         }
 
-        // Логика регистрации
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
@@ -59,7 +56,12 @@ function Auth({ setUser }) {
         setUser(user);
       }
     } catch (error) {
-      setError(error.message);
+      console.error('Ошибка аутентификации:', error);
+      setError(
+        error.code === 'auth/invalid-credential'
+          ? 'Неверный логин или пароль'
+          : error.message
+      );
     } finally {
       setLoading(false);
     }
@@ -98,7 +100,14 @@ function Auth({ setUser }) {
           required
         />
         <button type="submit" disabled={loading}>
-          {loading ? 'Загрузка...' : isLogin ? 'Войти' : 'Зарегистрироваться'}
+          {loading ? (
+            <>
+              <div className="loading-spinner"></div>
+              {isLogin ? 'Вход...' : 'Регистрация...'}
+            </>
+          ) : (
+            isLogin ? 'Войти' : 'Зарегистрироваться'
+          )}
         </button>
       </form>
       <button 
@@ -106,6 +115,9 @@ function Auth({ setUser }) {
         onClick={() => {
           setIsLogin(!isLogin);
           setError('');
+          setLogin('');
+          setPassword('');
+          setEmail('');
         }}
         disabled={loading}
       >
