@@ -152,7 +152,7 @@ function Stats({ user }) {
     const violatorsMap = new Map();
 
     data.forEach(check => {
-      const authorId = check.author;
+      const authorId = check.author || 'unknown';
       if (!violatorsMap.has(authorId)) {
         violatorsMap.set(authorId, {
           author: authorId,
@@ -166,7 +166,7 @@ function Stats({ user }) {
       const stats = violatorsMap.get(authorId);
       stats.totalMessages++;
 
-      if (!check.is_safe) {
+      if (check.toxic) {
         stats.toxicMessages++;
       }
       if (check.spam) {
@@ -178,7 +178,7 @@ function Stats({ user }) {
 
     return Array.from(violatorsMap.values())
       .sort((a, b) => b.violationRate - a.violationRate)
-      .slice(0, 10); // Топ 10 нарушителей
+      .slice(0, 10);
   };
 
   const prepareChartData = (labels, safeCount, unsafeCount) => {
@@ -259,93 +259,83 @@ function Stats({ user }) {
 
   useEffect(() => {
     const fetchTelegramChecks = async () => {
-      if (!user?.email) {
-        setError('Пользователь не авторизован');
-        return;
-      }
-
       try {
-        const groupsRef = collection(db, 'groups');
-        const groupDocs = await getDocs(query(groupsRef, where('info.admin_email', '==', user.email)));
-        const reviewDates = {};
-        const dates = {};
-        const data = [];
-        const uniqueMasters = new Set(['all', 'no-master']);
-
-        for (const groupDoc of groupDocs.docs) {
-          const groupId = groupDoc.id;
-          const checksRef = collection(db, 'groups', groupId, 'checks');
-          const checksSnapshot = await getDocs(checksRef);
-
-          checksSnapshot.forEach((doc) => {
-            const check = doc.data();
-            if (!check.date) return;
-            
-            if (check.master) {
-              uniqueMasters.add(check.master);
-            }
-
-            const checkDate = check.date.toDate();
-            const date = checkDate.toISOString().split('T')[0];
-
-            if (!dates[date]) {
-              dates[date] = { safe: 0, toxic: 0 };
-            }
-
-            const is_safe = check.result && check.result.is_safe;
-            if (is_safe) {
-              dates[date].safe++;
-            } else {
-              dates[date].toxic++;
-            }
-
-            if (check.review) {
-              if (!reviewDates[date]) {
-                reviewDates[date] = { positive: 0, negative: 0 };
-              }
-              if (check.sentiment === true) {
-                reviewDates[date].positive++;
-              } else if (check.sentiment === false) {
-                reviewDates[date].negative++;
-              }
-            }
-
-            data.push({
-              id: doc.id,
-              date: checkDate,
-              text: check.text || 'Сообщение',
-              author: check.author || 'Неизвестен',
-              master: check.master,
-              is_safe: is_safe,
-              violations: check.result?.violations || [],
-            });
-          });
+        const response = await fetch('/api/telegram-checks');
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
         }
-
-        setMasters(Array.from(uniqueMasters));
+        const data = await response.json();
 
         let filtered = filterDataByPeriod(data, dates);
         filtered = filterDataByMaster(filtered.data, filtered.dates);
         setHistory(filtered.data);
 
-        // Вычисляем статистику нарушителей
         const violatorsStats = calculateViolators(filtered.data);
         setViolators(violatorsStats);
 
         const labels = Object.keys(filtered.dates).sort();
-        const safeCount = labels.map(date => 
-          filtered.dates[date].filter(check => check.is_safe).length
-        );
-        const unsafeCount = labels.map(date => 
-          filtered.dates[date].filter(check => !check.is_safe).length
-        );
+        const safeCount = labels.map(date => filtered.dates[date].safe || 0);
+        const unsafeCount = labels.map(date => filtered.dates[date].toxic || 0);
 
-        const reviews = labels.map(date => 
-          filtered.dates[date].map(check => check.sentiment)
-        ).flat();
+        // Подготавливаем данные для отзывов
+        const positiveCount = labels.map(date => filtered.dates[date].positive || 0);
+        const neutralCount = labels.map(date => filtered.dates[date].neutral || 0);
+        const negativeCount = labels.map(date => filtered.dates[date].negative || 0);
 
         setChartData(prepareChartData(labels, safeCount, unsafeCount));
-        setReviewChartData(prepareReviewChartData(labels, reviews));
+        
+        // Для круговых диаграмм суммируем все значения
+        const totalPositive = positiveCount.reduce((a, b) => a + b, 0);
+        const totalNeutral = neutralCount.reduce((a, b) => a + b, 0);
+        const totalNegative = negativeCount.reduce((a, b) => a + b, 0);
+
+        const reviewData = chartType === 'pie' || chartType === 'doughnut'
+          ? {
+              labels: ['Положительные', 'Нейтральные', 'Негативные'],
+              datasets: [{
+                data: [totalPositive, totalNeutral, totalNegative],
+                backgroundColor: [
+                  'rgba(75, 192, 192, 0.5)',
+                  'rgba(255, 206, 86, 0.5)',
+                  'rgba(255, 99, 132, 0.5)',
+                ],
+                borderColor: [
+                  'rgba(75, 192, 192, 1)',
+                  'rgba(255, 206, 86, 1)',
+                  'rgba(255, 99, 132, 1)',
+                ],
+                borderWidth: 1,
+              }],
+            }
+          : {
+              labels,
+              datasets: [
+                {
+                  label: 'Положительные',
+                  data: positiveCount,
+                  backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                  borderColor: 'rgba(75, 192, 192, 1)',
+                  borderWidth: 1,
+                },
+                {
+                  label: 'Нейтральные',
+                  data: neutralCount,
+                  backgroundColor: 'rgba(255, 206, 86, 0.5)',
+                  borderColor: 'rgba(255, 206, 86, 1)',
+                  borderWidth: 1,
+                },
+                {
+                  label: 'Негативные',
+                  data: negativeCount,
+                  backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                  borderColor: 'rgba(255, 99, 132, 1)',
+                  borderWidth: 1,
+                },
+              ],
+            };
+
+        setReviewChartData(reviewData);
+
       } catch (error) {
         console.error('Ошибка при загрузке данных:', error);
         setError('Ошибка при загрузке данных');
@@ -429,7 +419,7 @@ function Stats({ user }) {
     } else {
       fetchPersonalChecks();
     }
-  }, [source, user?.email, periodType, customStartDate, customEndDate, selectedMaster]);
+  }, [source, user?.email, periodType, customStartDate, customEndDate, selectedMaster, chartType]);
 
   const handlePeriodChange = (e) => {
     const value = e.target.value;
