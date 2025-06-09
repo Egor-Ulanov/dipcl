@@ -79,7 +79,8 @@ function Stats({ user }) {
         if (!filteredDates[dateStr]) {
           filteredDates[dateStr] = { safe: 0, toxic: 0 };
         }
-        if (item.result.is_safe) {
+        const is_safe = item.result && item.result.is_safe;
+        if (is_safe) {
           filteredDates[dateStr].safe++;
         } else {
           filteredDates[dateStr].toxic++;
@@ -91,7 +92,8 @@ function Stats({ user }) {
         if (!filteredDates[dateStr]) {
           filteredDates[dateStr] = { safe: 0, toxic: 0 };
         }
-        if (item.result.is_safe) {
+        const is_safe = item.result && item.result.is_safe;
+        if (is_safe) {
           filteredDates[dateStr].safe++;
         } else {
           filteredDates[dateStr].toxic++;
@@ -139,7 +141,8 @@ function Stats({ user }) {
               dates[date] = { safe: 0, toxic: 0 };
             }
 
-            if (check.result.is_safe) {
+            const is_safe = check.result && check.result.is_safe;
+            if (is_safe) {
               dates[date].safe++;
             } else {
               dates[date].toxic++;
@@ -162,8 +165,8 @@ function Stats({ user }) {
               text: check.text || 'Сообщение',
               author: check.author || 'Неизвестен',
               master: check.master,
-              is_safe: check.result.is_safe,
-              violations: check.result.violations,
+              is_safe: is_safe,
+              violations: check.result?.violations || [],
             });
           });
         }
