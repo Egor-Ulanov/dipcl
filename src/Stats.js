@@ -259,48 +259,83 @@ function Stats({ user }) {
 
   useEffect(() => {
     const fetchTelegramChecks = async () => {
+      if (!user?.email) {
+        setError('Пользователь не авторизован');
+        return;
+      }
+
       try {
-        const response = await fetch('/api/telegram-checks');
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        const data = await response.json();
+        const groupsRef = collection(db, 'groups');
+        const groupDocs = await getDocs(query(groupsRef, where('info.admin_email', '==', user.email)));
+        
+        const dates = {};
+        const uniqueMasters = new Set(['all', 'no-master']);
+        const allChecks = [];
 
-        // Группируем данные по датам
-        const dates = data.reduce((acc, check) => {
-          const date = new Date(check.date).toISOString().split('T')[0];
-          if (!acc[date]) {
-            acc[date] = {
-              safe: 0,
-              toxic: 0,
-              positive: 0,
-              neutral: 0,
-              negative: 0,
-              checks: []
+        for (const groupDoc of groupDocs.docs) {
+          const groupId = groupDoc.id;
+          const checksRef = collection(db, 'groups', groupId, 'checks');
+          const checksSnapshot = await getDocs(checksRef);
+
+          checksSnapshot.forEach((doc) => {
+            const check = doc.data();
+            if (!check.date) return;
+
+            if (check.master) {
+              uniqueMasters.add(check.master);
+            }
+
+            const checkDate = check.date.toDate();
+            const date = checkDate.toISOString().split('T')[0];
+
+            if (!dates[date]) {
+              dates[date] = {
+                safe: 0,
+                toxic: 0,
+                positive: 0,
+                neutral: 0,
+                negative: 0,
+                checks: []
+              };
+            }
+
+            // Подсчитываем статистику безопасности
+            const is_safe = check.result && check.result.is_safe;
+            if (is_safe) {
+              dates[date].safe++;
+            } else {
+              dates[date].toxic++;
+            }
+
+            // Подсчитываем отзывы
+            if (check.sentiment === true) {
+              dates[date].positive++;
+            } else if (check.sentiment === false) {
+              dates[date].negative++;
+            } else {
+              dates[date].neutral++;
+            }
+
+            // Добавляем проверку в массив
+            const checkData = {
+              id: doc.id,
+              date: checkDate,
+              text: check.text || 'Сообщение',
+              author: check.author || 'Неизвестен',
+              master: check.master,
+              is_safe: is_safe,
+              sentiment: check.sentiment,
+              violations: check.result?.violations || [],
             };
-          }
-          
-          // Подсчитываем статистику
-          if (check.is_safe) {
-            acc[date].safe++;
-          } else {
-            acc[date].toxic++;
-          }
+            
+            dates[date].checks.push(checkData);
+            allChecks.push(checkData);
+          });
+        }
 
-          // Подсчитываем отзывы
-          if (check.sentiment > 0) {
-            acc[date].positive++;
-          } else if (check.sentiment < 0) {
-            acc[date].negative++;
-          } else {
-            acc[date].neutral++;
-          }
+        setMasters(Array.from(uniqueMasters));
 
-          acc[date].checks.push(check);
-          return acc;
-        }, {});
-
-        let filtered = filterDataByPeriod(data, dates);
+        let filtered = filterDataByPeriod(allChecks, dates);
         filtered = filterDataByMaster(filtered.data, filtered.dates);
         setHistory(filtered.data);
 
@@ -396,51 +431,111 @@ function Stats({ user }) {
           const date = checkDate.toISOString().split('T')[0];
 
           if (!dates[date]) {
-            dates[date] = { safe: 0, toxic: 0 };
+            dates[date] = {
+              safe: 0,
+              toxic: 0,
+              positive: 0,
+              neutral: 0,
+              negative: 0,
+              checks: []
+            };
           }
 
+          // Подсчитываем статистику безопасности
           if (check.result.is_safe) {
             dates[date].safe++;
           } else {
             dates[date].toxic++;
           }
 
-          data.push({
+          // Подсчитываем отзывы (если есть)
+          if (check.sentiment === true) {
+            dates[date].positive++;
+          } else if (check.sentiment === false) {
+            dates[date].negative++;
+          } else {
+            dates[date].neutral++;
+          }
+
+          const checkData = {
             id: doc.id,
             date: checkDate,
             text: check.text || 'Сообщение',
             author: check.author || 'Неизвестен',
             is_safe: check.result.is_safe,
+            sentiment: check.sentiment,
             violations: check.result.violations,
-          });
+          };
+
+          dates[date].checks.push(checkData);
+          data.push(checkData);
         });
 
         const filtered = filterDataByPeriod(data, dates);
         setHistory(filtered.data);
 
         const labels = Object.keys(filtered.dates).sort();
-        const safeValues = labels.map((date) => filtered.dates[date].safe);
-        const toxicValues = labels.map((date) => filtered.dates[date].toxic);
+        const safeCount = labels.map(date => filtered.dates[date].safe || 0);
+        const unsafeCount = labels.map(date => filtered.dates[date].toxic || 0);
 
-        setChartData({
-          labels,
-          datasets: [
-            {
-              label: 'Обычные проверки',
-              data: safeValues,
-              backgroundColor: 'rgba(75, 192, 192, 0.2)',
-              borderColor: 'rgba(75, 192, 192, 1)',
-              borderWidth: 1,
-            },
-            {
-              label: 'Токсичные проверки',
-              data: toxicValues,
-              backgroundColor: 'rgba(255, 99, 132, 0.2)',
-              borderColor: 'rgba(255, 99, 132, 1)',
-              borderWidth: 1,
-            },
-          ],
-        });
+        setChartData(prepareChartData(labels, safeCount, unsafeCount));
+
+        // Подготавливаем данные для отзывов
+        const positiveCount = labels.map(date => filtered.dates[date].positive || 0);
+        const neutralCount = labels.map(date => filtered.dates[date].neutral || 0);
+        const negativeCount = labels.map(date => filtered.dates[date].negative || 0);
+
+        // Для круговых диаграмм суммируем все значения
+        const totalPositive = positiveCount.reduce((a, b) => a + b, 0);
+        const totalNeutral = neutralCount.reduce((a, b) => a + b, 0);
+        const totalNegative = negativeCount.reduce((a, b) => a + b, 0);
+
+        const reviewData = chartType === 'pie' || chartType === 'doughnut'
+          ? {
+              labels: ['Положительные', 'Нейтральные', 'Негативные'],
+              datasets: [{
+                data: [totalPositive, totalNeutral, totalNegative],
+                backgroundColor: [
+                  'rgba(75, 192, 192, 0.5)',
+                  'rgba(255, 206, 86, 0.5)',
+                  'rgba(255, 99, 132, 0.5)',
+                ],
+                borderColor: [
+                  'rgba(75, 192, 192, 1)',
+                  'rgba(255, 206, 86, 1)',
+                  'rgba(255, 99, 132, 1)',
+                ],
+                borderWidth: 1,
+              }],
+            }
+          : {
+              labels,
+              datasets: [
+                {
+                  label: 'Положительные',
+                  data: positiveCount,
+                  backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                  borderColor: 'rgba(75, 192, 192, 1)',
+                  borderWidth: 1,
+                },
+                {
+                  label: 'Нейтральные',
+                  data: neutralCount,
+                  backgroundColor: 'rgba(255, 206, 86, 0.5)',
+                  borderColor: 'rgba(255, 206, 86, 1)',
+                  borderWidth: 1,
+                },
+                {
+                  label: 'Негативные',
+                  data: negativeCount,
+                  backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                  borderColor: 'rgba(255, 99, 132, 1)',
+                  borderWidth: 1,
+                },
+              ],
+            };
+
+        setReviewChartData(reviewData);
       } catch (error) {
         console.error('Ошибка при загрузке данных:', error);
         setError('Ошибка при загрузке данных');
