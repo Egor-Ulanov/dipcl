@@ -5,7 +5,7 @@
   padding: 20px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   margin: 20px auto;
-  max-width: 800px;
+  max-width: 1200px;
 }
 
 /* Заголовок графика */
@@ -25,16 +25,12 @@
 }
 
 .stats-select,
-.period-select {
-  padding: 8px 12px;
-  font-size: 16px;
+.period-select,
+.master-select {
+  padding: 8px;
   border: 1px solid #ccc;
-  border-radius: 6px;
+  border-radius: 4px;
   background-color: white;
-  color: #333;
-  outline: none;
-  transition: border-color 0.3s;
-  flex: 1;
   min-width: 200px;
 }
 

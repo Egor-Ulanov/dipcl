@@ -21,6 +21,8 @@ function Stats({ user }) {
   const [customStartDate, setCustomStartDate] = useState(new Date());
   const [customEndDate, setCustomEndDate] = useState(new Date());
   const [showCustomPeriod, setShowCustomPeriod] = useState(false);
+  const [selectedMaster, setSelectedMaster] = useState('all');
+  const [masters, setMasters] = useState(['all']);
 
   const filterDataByPeriod = (data, dates) => {
     const now = new Date();
@@ -65,6 +67,43 @@ function Stats({ user }) {
     return { dates: filteredDates, data: filteredData };
   };
 
+  const filterDataByMaster = (data, dates) => {
+    if (selectedMaster === 'all') {
+      return { dates, data };
+    }
+
+    const filteredDates = {};
+    const filteredData = data.filter(item => {
+      if (selectedMaster === 'no-master' && !item.master) {
+        const dateStr = item.date.toISOString().split('T')[0];
+        if (!filteredDates[dateStr]) {
+          filteredDates[dateStr] = { safe: 0, toxic: 0 };
+        }
+        if (item.result.is_safe) {
+          filteredDates[dateStr].safe++;
+        } else {
+          filteredDates[dateStr].toxic++;
+        }
+        return true;
+      }
+      if (item.master === selectedMaster) {
+        const dateStr = item.date.toISOString().split('T')[0];
+        if (!filteredDates[dateStr]) {
+          filteredDates[dateStr] = { safe: 0, toxic: 0 };
+        }
+        if (item.result.is_safe) {
+          filteredDates[dateStr].safe++;
+        } else {
+          filteredDates[dateStr].toxic++;
+        }
+        return true;
+      }
+      return false;
+    });
+
+    return { dates: filteredDates, data: filteredData };
+  };
+
   useEffect(() => {
     const fetchTelegramChecks = async () => {
       if (!user?.email) {
@@ -78,6 +117,7 @@ function Stats({ user }) {
         const reviewDates = {};
         const dates = {};
         const data = [];
+        const uniqueMasters = new Set(['all', 'no-master']);
 
         for (const groupDoc of groupDocs.docs) {
           const groupId = groupDoc.id;
@@ -87,6 +127,11 @@ function Stats({ user }) {
           checksSnapshot.forEach((doc) => {
             const check = doc.data();
             if (!check.date) return;
+            
+            if (check.master) {
+              uniqueMasters.add(check.master);
+            }
+
             const checkDate = check.date.toDate();
             const date = checkDate.toISOString().split('T')[0];
 
@@ -116,13 +161,17 @@ function Stats({ user }) {
               date: checkDate,
               text: check.text || 'Сообщение',
               author: check.author || 'Неизвестен',
+              master: check.master,
               is_safe: check.result.is_safe,
               violations: check.result.violations,
             });
           });
         }
 
-        const filtered = filterDataByPeriod(data, dates);
+        setMasters(Array.from(uniqueMasters));
+
+        let filtered = filterDataByPeriod(data, dates);
+        filtered = filterDataByMaster(filtered.data, filtered.dates);
         setHistory(filtered.data);
 
         const labels = Object.keys(filtered.dates).sort();
@@ -257,7 +306,7 @@ function Stats({ user }) {
     } else {
       fetchPersonalChecks();
     }
-  }, [source, user?.email, periodType, customStartDate, customEndDate]);
+  }, [source, user?.email, periodType, customStartDate, customEndDate, selectedMaster]);
 
   useEffect(() => {
     const filtered = history.filter((check) => {
@@ -294,6 +343,20 @@ function Stats({ user }) {
           <option value="week">Последняя неделя</option>
           <option value="month">Последний месяц</option>
           <option value="custom">Выбрать период</option>
+        </select>
+        <select 
+          className="master-select" 
+          value={selectedMaster} 
+          onChange={(e) => setSelectedMaster(e.target.value)}
+        >
+          <option value="all">Все мастера</option>
+          <option value="no-master">Без мастера</option>
+          {masters
+            .filter(master => master !== 'all' && master !== 'no-master')
+            .map(master => (
+              <option key={master} value={master}>{master}</option>
+            ))
+          }
         </select>
       </div>
       
