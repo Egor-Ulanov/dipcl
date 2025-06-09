@@ -70,19 +70,11 @@ function HomePage({ isEditing }) {
     if (newLogo && user) {
       try {
         setLoading(true);
-        console.log('Загружаем логотип...');
-        
-        // Загружаем в Cloudinary
         const url = await uploadToCloudinary(newLogo);
-        console.log('Логотип загружен, URL:', url);
-        
-        // Сохраняем URL в Firebase
         setLogoURL(url);
         await updateDoc(doc(db, "users", user.uid), {
           logoURL: url,
         });
-        
-        console.log('URL логотипа сохранен в Firebase');
       } catch (error) {
         console.error('Ошибка при загрузке логотипа:', error);
         alert('Не удалось загрузить логотип: ' + error.message);
@@ -96,21 +88,13 @@ function HomePage({ isEditing }) {
     if (newImages.length > 0 && user) {
       try {
         setLoading(true);
-        console.log('Загружаем изображения...');
-        
-        // Загружаем все изображения в Cloudinary
         const uploadPromises = Array.from(newImages).map(uploadToCloudinary);
         const urls = await Promise.all(uploadPromises);
-        console.log('Изображения загружены, URLs:', urls);
-        
-        // Сохраняем URLs в Firebase
         const updatedImages = [...images, ...urls];
         setImages(updatedImages);
         await updateDoc(doc(db, "users", user.uid), {
           images: updatedImages,
         });
-        
-        console.log('URLs изображений сохранены в Firebase');
       } catch (error) {
         console.error('Ошибка при загрузке изображений:', error);
         alert('Не удалось загрузить изображения: ' + error.message);
@@ -123,13 +107,11 @@ function HomePage({ isEditing }) {
   const handleDescriptionSave = async () => {
     if (user) {
       try {
-        console.log('Сохраняем описание...');
         await setDoc(
           doc(db, "users", user.uid),
           { description },
           { merge: true }
         );
-        console.log('Описание сохранено');
       } catch (error) {
         console.error('Ошибка при сохранении описания:', error);
         alert('Не удалось сохранить описание: ' + error.message);
@@ -179,7 +161,10 @@ function HomePage({ isEditing }) {
                     className="delete-button"
                     onClick={handleDeleteLogo}
                   >
-                    Удалить логотип
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                      <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/>
+                    </svg>
+                    Удалить
                   </button>
                 )}
               </>
@@ -193,7 +178,19 @@ function HomePage({ isEditing }) {
                   disabled={loading}
                 />
                 <button onClick={handleLogoUpload} disabled={loading}>
-                  {loading ? 'Загрузка...' : 'Загрузить логотип'}
+                  {loading ? (
+                    <>
+                      <div className="loading-spinner"></div>
+                      Загрузка...
+                    </>
+                  ) : (
+                    <>
+                      <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                        <path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/>
+                      </svg>
+                      Загрузить логотип
+                    </>
+                  )}
                 </button>
               </div>
             )}
@@ -201,7 +198,7 @@ function HomePage({ isEditing }) {
         </header>
 
         <section className="about">
-          <h1>О нашей кампании</h1>
+          <h1>О нашей компании</h1>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
@@ -211,7 +208,19 @@ function HomePage({ isEditing }) {
           />
           {isEditing && (
             <button onClick={handleDescriptionSave} disabled={loading}>
-              Сохранить описание
+              {loading ? (
+                <>
+                  <div className="loading-spinner"></div>
+                  Сохранение...
+                </>
+              ) : (
+                <>
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                    <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/>
+                  </svg>
+                  Сохранить описание
+                </>
+              )}
             </button>
           )}
         </section>
@@ -228,19 +237,34 @@ function HomePage({ isEditing }) {
                 disabled={loading}
               />
               <button onClick={handleImagesUpload} disabled={loading}>
-                {loading ? 'Загрузка...' : 'Загрузить изображения'}
+                {loading ? (
+                  <>
+                    <div className="loading-spinner"></div>
+                    Загрузка...
+                  </>
+                ) : (
+                  <>
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                      <path d="M19 7v2.99s-1.99.01-2 0V7h-3s.01-1.99 0-2h3V2h2v3h3v2h-3zm-3 4V8h-3V5H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-8h-3zM5 19l3-4 2 3 3-4 4 5H5z"/>
+                    </svg>
+                    Загрузить изображения
+                  </>
+                )}
               </button>
             </div>
           )}
           <div className="images">
             {images.map((src, i) => (
               <div key={i} className="image-container">
-                <img src={src} alt={`promo${i}`} />
+                <img src={src} alt={`Наша работа ${i + 1}`} />
                 {isEditing && (
                   <button 
                     className="delete-button"
                     onClick={() => handleDeleteImage(i)}
                   >
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                      <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/>
+                    </svg>
                     Удалить
                   </button>
                 )}
