@@ -97,7 +97,7 @@ function Instructions() {
             </div>
 
             <div className="step">
-              <div className="step-number">2/div>
+              <div className="step-number">2</div>
               <div className="step-content">
                 <h3>Мониторинг и статистика</h3>
                 <p>Используйте раздел "Статистика" для отслеживания результатов:</p>
