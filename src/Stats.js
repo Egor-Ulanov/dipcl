@@ -21,31 +21,54 @@ function Stats({ user }) {
   const [masters, setMasters] = useState(['all']);
 
   const filterDataByPeriod = (data, dates) => {
+    if (periodType === 'all') {
+      return { dates, data };
+    }
+
     const now = new Date();
     let startDate;
     
     switch (periodType) {
       case 'day':
-        startDate = new Date(now.setDate(now.getDate() - 1));
+        startDate = new Date(now);
+        startDate.setDate(now.getDate() - 1);
         break;
       case 'week':
-        startDate = new Date(now.setDate(now.getDate() - 7));
+        startDate = new Date(now);
+        startDate.setDate(now.getDate() - 7);
         break;
       case 'month':
-        startDate = new Date(now.setMonth(now.getMonth() - 1));
+        startDate = new Date(now);
+        startDate.setMonth(now.getMonth() - 1);
         break;
       case 'custom':
-        startDate = customStartDate;
+        startDate = new Date(customStartDate);
         now.setTime(customEndDate.getTime());
         break;
       default:
         return { dates, data };
     }
 
+    // Устанавливаем время для корректного сравнения
+    startDate.setHours(0, 0, 0, 0);
+    const endDate = new Date(now);
+    endDate.setHours(23, 59, 59, 999);
+
+    console.log('Фильтрация по периоду:', {
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString()
+    });
+
     const filteredDates = {};
     const filteredData = data.filter(item => {
-      const itemDate = item.date;
-      if (itemDate >= startDate && itemDate <= now) {
+      const itemDate = new Date(item.date);
+      
+      console.log('Проверка записи:', {
+        itemDate: itemDate.toISOString(),
+        isInRange: itemDate >= startDate && itemDate <= endDate
+      });
+
+      if (itemDate >= startDate && itemDate <= endDate) {
         const dateStr = itemDate.toISOString().split('T')[0];
         if (!filteredDates[dateStr]) {
           filteredDates[dateStr] = { safe: 0, toxic: 0 };
