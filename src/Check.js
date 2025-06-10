@@ -88,7 +88,7 @@ function Home({ user }) {
         value={text}
         onChange={(e) => setText(e.target.value)}
       />
-      <label>
+      <label className="file-upload-label">
         Перетащите файл сюда для загрузки
         <input type="file" accept=".txt, .docx" onChange={(e) => handleFileUpload(e.target.files[0])} />
       </label>

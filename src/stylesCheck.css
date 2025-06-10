@@ -89,3 +89,62 @@ body {
 .file-check-container .results .safe {
   color: green;
 }
+
+.file-check-container textarea,
+.file-check-container input[type="file"],
+.file-check-container button,
+.file-check-container label {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+}
+
+.file-check-container textarea {
+  padding: 10px;
+  margin: 10px 0;
+  border: 1px solid #90caf9;
+  border-radius: 5px;
+  font-size: 14px;
+  resize: vertical;
+}
+
+.file-check-container label {
+  background: #e3f2fd;
+  border: 2px dashed #90caf9;
+  border-radius: 10px;
+  padding: 20px;
+  margin: 15px 0;
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+}
+
+.file-check-container label:hover {
+  background: #bbdefb;
+}
+
+.file-check-container input[type="file"] {
+  opacity: 0;
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 100%;
+  cursor: pointer;
+}
+
+.file-check-container button {
+  padding: 12px;
+  margin: 10px 0;
+  font-size: 16px;
+  background: #1976d2;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.file-check-container button:hover {
+  background: #1565c0;
+}
