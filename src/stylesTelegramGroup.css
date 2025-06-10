@@ -134,4 +134,283 @@ button:disabled {
   .actions {
     flex-direction: column;
   }
+}
+
+.telegram-page {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: calc(100vh - 64px);
+  padding: 40px 20px;
+}
+
+.telegram-content {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 600px;
+  padding: 32px;
+}
+
+.telegram-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.header-icon {
+  width: 40px;
+  height: 40px;
+  color: #2196f3;
+  flex-shrink: 0;
+}
+
+.telegram-header h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #1e88e5;
+}
+
+.qr-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.qr-image-container {
+  background: white;
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.qr-image {
+  max-width: 280px;
+  height: auto;
+  border-radius: 8px;
+}
+
+.qr-actions {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
+.action-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex: 1;
+}
+
+.action-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.action-button.print {
+  background: #2196f3;
+  color: white;
+}
+
+.action-button.print:hover {
+  background: #1e88e5;
+  transform: translateY(-1px);
+}
+
+.action-button.delete {
+  background: #f44336;
+  color: white;
+}
+
+.action-button.delete:hover {
+  background: #e53935;
+  transform: translateY(-1px);
+}
+
+.upload-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.upload-zone input[type="file"] {
+  display: none;
+}
+
+.upload-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 32px;
+  border: 2px dashed #90caf9;
+  border-radius: 12px;
+  background: #e3f2fd;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.upload-label:hover {
+  background: #bbdefb;
+  border-color: #64b5f6;
+}
+
+.upload-label svg {
+  width: 32px;
+  height: 32px;
+  color: #1e88e5;
+}
+
+.upload-label span {
+  font-size: 16px;
+  font-weight: 500;
+  color: #1e88e5;
+}
+
+.upload-label small {
+  color: #78909c;
+}
+
+.loading-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #455a64;
+}
+
+.loading-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #2196f3;
+  border-radius: 50%;
+  border-top-color: transparent;
+  animation: spin 1s linear infinite;
+}
+
+.no-qr-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 32px;
+  background: #f5f5f5;
+  border-radius: 12px;
+  color: #78909c;
+}
+
+.no-qr-message svg {
+  width: 40px;
+  height: 40px;
+  color: #90a4ae;
+}
+
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: #ffebee;
+  border: 1px solid #ef9a9a;
+  border-radius: 8px;
+  color: #c62828;
+}
+
+.error-message svg {
+  width: 20px;
+  height: 20px;
+}
+
+.telegram-join {
+  margin-top: 32px;
+  text-align: center;
+}
+
+.telegram-join p {
+  margin: 0 0 16px;
+  color: #455a64;
+}
+
+.join-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: #0088cc;
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.join-button:hover {
+  background: #006699;
+  transform: translateY(-1px);
+}
+
+.join-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 640px) {
+  .telegram-page {
+    padding: 20px;
+  }
+
+  .telegram-content {
+    padding: 24px;
+  }
+
+  .telegram-header {
+    margin-bottom: 24px;
+  }
+
+  .telegram-header h1 {
+    font-size: 20px;
+  }
+
+  .header-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .qr-actions {
+    flex-direction: column;
+  }
+
+  .action-button {
+    width: 100%;
+  }
+
+  .upload-label {
+    padding: 24px;
+  }
+
+  .join-button {
+    width: 100%;
+    justify-content: center;
+  }
 } 

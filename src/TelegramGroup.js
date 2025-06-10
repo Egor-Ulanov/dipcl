@@ -131,61 +131,97 @@ function TelegramGroup({ isEditing }) {
   };
 
   return (
-    <div className="telegram-group-container">
-      <h1>Присоединяйтесь к нашей группе в Telegram</h1>
-      
-      <div className="qr-section">
-        {qrImage ? (
-          // Если QR-код загружен, показываем его и кнопки управления
-          <div className="qr-code-container">
-            <img src={qrImage} alt="QR-код Telegram группы" className="qr-code" />
-            <div className="actions">
-              <button onClick={handlePrint} className="print-button">
-                Распечатать QR-код
-              </button>
-              {isEditing && (
-                <button 
-                  onClick={handleDeleteQrCode}
-                  className="delete-button"
-                >
-                  Удалить QR-код
+    <div className="telegram-page">
+      <div className="telegram-content">
+        <div className="telegram-header">
+          <div className="header-icon">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.58 20 4 16.42 4 12C4 7.58 7.58 4 12 4C16.42 4 20 7.58 20 12C20 16.42 16.42 20 12 20Z" fill="currentColor"/>
+              <path d="M16.59 7.58L10 14.17L7.41 11.59L6 13L10 17L18 9L16.59 7.58Z" fill="currentColor"/>
+            </svg>
+          </div>
+          <h1>Присоединяйтесь к нашей группе в Telegram</h1>
+        </div>
+
+        <div className="qr-section">
+          {qrImage ? (
+            <div className="qr-display">
+              <div className="qr-image-container">
+                <img src={qrImage} alt="QR-код Telegram группы" className="qr-image" />
+              </div>
+              <div className="qr-actions">
+                <button onClick={handlePrint} className="action-button print">
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6v4h12V3z" fill="currentColor"/>
+                  </svg>
+                  <span>Распечатать QR-код</span>
                 </button>
+                {isEditing && (
+                  <button onClick={handleDeleteQrCode} className="action-button delete">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/>
+                    </svg>
+                    <span>Удалить QR-код</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          ) : isEditing ? (
+            <div className="upload-zone">
+              <input
+                type="file"
+                id="qr-upload"
+                accept="image/*"
+                onChange={handleImageUpload}
+                disabled={loading}
+              />
+              <label htmlFor="qr-upload" className="upload-label">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="currentColor"/>
+                </svg>
+                <span>Загрузить QR-код</span>
+                <small>Нажмите или перетащите файл</small>
+              </label>
+              {loading && (
+                <div className="loading-indicator">
+                  <span className="loading-spinner"></span>
+                  <span>Загрузка...</span>
+                </div>
               )}
             </div>
-          </div>
-        ) : isEditing ? (
-          // Если режим редактирования и QR-код не загружен, показываем форму загрузки
-          <div className="upload-section">
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
-              disabled={loading}
-            />
-            {loading && <div className="loading">Загрузка...</div>}
-          </div>
-        ) : (
-          // Если не режим редактирования и QR-код не загружен
-          <div className="no-qr-code">
-            QR-код пока не загружен
-          </div>
-        )}
-        
-        {/* Показываем сообщение об ошибке, если есть */}
-        {error && <div className="error-message">{error}</div>}
-      </div>
+          ) : (
+            <div className="no-qr-message">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM13 17H11V11H13V17ZM13 9H11V7H13V9Z" fill="currentColor"/>
+              </svg>
+              <span>QR-код пока не загружен</span>
+            </div>
+          )}
+          
+          {error && (
+            <div className="error-message">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM13 17H11V15H13V17ZM13 13H11V7H13V13Z" fill="currentColor"/>
+              </svg>
+              <span>{error}</span>
+            </div>
+          )}
+        </div>
 
-      {/* Секция с прямой ссылкой на Telegram */}
-      <div className="telegram-link">
-        <p>Или присоединяйтесь напрямую по ссылке:</p>
-        <a 
-          href={telegramLink} 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="telegram-button"
-        >
-          Присоединиться к группе
-        </a>
+        <div className="telegram-join">
+          <p>Или присоединяйтесь напрямую по ссылке:</p>
+          <a 
+            href={telegramLink} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="join-button"
+          >
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9.78 18.65L10.06 14.42L17.74 7.5C18.08 7.19 17.67 7.04 17.22 7.31L7.74 13.3L3.64 12C2.76 11.75 2.75 11.14 3.84 10.7L19.81 4.54C20.54 4.21 21.24 4.72 20.96 5.84L18.24 18.65C18.05 19.56 17.5 19.78 16.74 19.36L12.6 16.3L10.61 18.23C10.38 18.46 10.19 18.65 9.78 18.65Z" fill="currentColor"/>
+            </svg>
+            <span>Присоединиться к группе</span>
+          </a>
+        </div>
       </div>
     </div>
   );
