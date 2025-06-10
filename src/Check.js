@@ -72,44 +72,37 @@ function Home({ user }) {
   };
 
   return (
-    <div className="file-check-container">
-      <h1>Проверка текста на запрещённый контент</h1>
-      <textarea
-        placeholder="Введите URL для проверки"
-        value={url}
-        onChange={(e) => setUrl(e.target.value)}
-      />
-      <button onClick={handleUrlCheck} disabled={isLoading}>
-        {isLoading ? "Загрузка..." : "Проверить URL"}
-      </button>
-      <textarea
-        rows="5"
-        placeholder="Введите текст..."
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-      />
-      <label className="file-upload-label">
-        Перетащите файл сюда для загрузки
-        <input type="file" accept=".txt, .docx" onChange={(e) => handleFileUpload(e.target.files[0])} />
-      </label>
-      <button onClick={handleCheck} disabled={isLoading}>
-        {isLoading ? "Загрузка..." : "Проверить текст"}
-      </button>
-      {result && (
-        <div className="results">
-          <h3>Результаты анализа:</h3>
-          <p>
-            Безопасен:{" "}
-            <span className={result.is_safe ? "safe" : "toxic"}>
-              {result.is_safe ? "Да" : "Нет"}
-            </span>
-          </p>
-          <p>
-            Нарушения: {result.violations?.length > 0 ? result.violations.join(", ") : "Нет"}
-          </p>
-        </div>
-      )}
+    <div className="check-page-container">
+    <h2>Проверка текста на запрещённый контент</h2>
+    <div className="check-grid">
+      <div className="check-column">
+        <input
+          type="text"
+          placeholder="Введите URL для проверки"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+        />
+        <button onClick={handleUrlCheck}>Проверить URL</button>
+      </div>
+  
+      <div className="check-column">
+        <textarea
+          placeholder="Введите текст..."
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+        />
+        <button onClick={handleTextCheck}>Проверить текст</button>
+      </div>
+  
+      <div className="check-column">
+        <label className="file-upload-label">
+          Перетащите файл сюда для загрузки
+          <input type="file" onChange={(e) => handleFileUpload(e.target.files[0])} />
+        </label>
+      </div>
     </div>
+  </div>
+  
   );
 }
 

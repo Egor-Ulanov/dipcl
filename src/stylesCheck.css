@@ -1,150 +1,69 @@
-body {
-  margin: 0;
-  font-family: 'Arial', sans-serif;
-  background: linear-gradient(135deg, #e0f7fa, #bbdefb);
-  min-height: 100vh;
+.check-page-container {
+  padding: 30px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+h2 {
+  text-align: center;
+  margin-bottom: 30px;
+  color: #1976d2;
+}
+
+.check-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 30px;
+}
+
+.check-column {
   display: flex;
-  flex-direction: column; /* Это может помочь при использовании нескольких элементов */
-  justify-content: center;
-  align-items: center;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.file-check-container {
-  background: #fff;
-  border-radius: 15px;
-  padding: 25px;
-  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+.check-column input,
+.check-column textarea,
+.check-column button,
+.file-upload-label {
   width: 100%;
-  max-width: 600px;
-  margin: 20px auto; /* Центрирование контейнера */
-}
-
-
-.file-check-container h1 {
-  color: #1976d2;
-  font-size: 24px;
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-.file-check-container textarea {
-  width: calc(100% - 20px); /* Учитываем внутренние отступы */
-  margin: 10px 10px;
-  padding: 10px;
-  border: 1px solid #90caf9;
-  border-radius: 5px;
-  font-size: 14px;
-}
-
-.file-check-container label {
-  display: block;
-  padding: 15px;
-  margin: 20px 10px;
-  background: #e3f2fd;
-  border: 2px dashed #90caf9;
-  border-radius: 10px;
-  text-align: center;
-  cursor: pointer;
-}
-
-.file-check-container label:hover {
-  background: #bbdefb;
-}
-
-.file-check-container button {
-  display: block;
-  width: calc(100% - 20px);
-  margin: 10px auto;
-  padding: 10px;
-  font-size: 16px;
-  border: none;
-  border-radius: 5px;
-  background: #1976d2;
-  color: white;
-  cursor: pointer;
-  transition: background 0.3s;
-}
-
-.file-check-container button:hover {
-  background: #1565c0;
-}
-
-.file-check-container .results {
-  margin-top: 20px;
-  background: #e3f2fd;
-  padding: 15px;
-  border-radius: 10px;
-  color: #333;
-}
-
-.file-check-container .results h3 {
-  color: #1976d2;
-}
-
-.file-check-container .results .toxic {
-  color: red;
-  font-weight: bold;
-}
-
-.file-check-container .results .safe {
-  color: green;
-}
-
-.file-check-container textarea,
-.file-check-container input[type="file"],
-.file-check-container button,
-.file-check-container label {
   box-sizing: border-box;
-  width: 100%;
-  max-width: 100%;
-}
-
-.file-check-container textarea {
-  padding: 10px;
-  margin: 10px 0;
-  border: 1px solid #90caf9;
-  border-radius: 5px;
+  padding: 12px;
   font-size: 14px;
+  border-radius: 5px;
+}
+
+.check-column textarea {
   resize: vertical;
+  height: 100px;
 }
 
-.file-check-container label {
-  background: #e3f2fd;
-  border: 2px dashed #90caf9;
-  border-radius: 10px;
-  padding: 20px;
-  margin: 15px 0;
-  text-align: center;
+.check-column button {
+  background-color: #1976d2;
+  color: white;
+  border: none;
   cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.check-column button:hover {
+  background-color: #1565c0;
+}
+
+.file-upload-label {
+  border: 2px dashed #90caf9;
+  background-color: #e3f2fd;
+  text-align: center;
   position: relative;
+  cursor: pointer;
+  padding: 20px;
 }
 
-.file-check-container label:hover {
-  background: #bbdefb;
-}
-
-.file-check-container input[type="file"] {
+.file-upload-label input[type="file"] {
   opacity: 0;
   position: absolute;
-  left: 0;
-  top: 0;
-  height: 100%;
+  inset: 0;
   width: 100%;
+  height: 100%;
   cursor: pointer;
-}
-
-.file-check-container button {
-  padding: 12px;
-  margin: 10px 0;
-  font-size: 16px;
-  background: #1976d2;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background 0.3s;
-}
-
-.file-check-container button:hover {
-  background: #1565c0;
 }
