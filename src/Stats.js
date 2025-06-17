@@ -311,7 +311,7 @@ function Stats({ user }) {
               };
             }
 
-            // Подсчитываем статистику безопасности
+            // Подсчитываем статистику безопасности для графика
             const is_toxic = check.violations && check.violations.includes("Токсичность");
             if (is_toxic) {
               dates[date].toxic++;
@@ -319,7 +319,7 @@ function Stats({ user }) {
               dates[date].safe++;
             }
 
-            // Подсчитываем отзывы
+            // Подсчитываем отзывы (оставить как есть)
             if (check.sentiment === true) {
               dates[date].positive++;
             } else if (check.sentiment === false) {
@@ -329,13 +329,14 @@ function Stats({ user }) {
             }
 
             // Добавляем проверку в массив
+            const is_safe = !(check.violations && check.violations.length > 0);
             const checkData = {
               id: doc.id,
               date: checkDate,
               text: check.text || 'Сообщение',
               author: check.author || 'Неизвестен',
               master: check.master,
-              is_safe: !is_toxic,
+              is_safe: is_safe,
               sentiment: check.sentiment,
               violations: check.violations || [],
             };
@@ -454,7 +455,7 @@ function Stats({ user }) {
             };
           }
 
-          // Подсчитываем статистику безопасности
+          // Подсчитываем статистику безопасности для графика
           const is_toxic = check.violations && check.violations.includes("Токсичность");
           if (is_toxic) {
             dates[date].toxic++;
@@ -462,7 +463,7 @@ function Stats({ user }) {
             dates[date].safe++;
           }
 
-          // Подсчитываем отзывы (если есть)
+          // Подсчитываем отзывы (оставить как есть)
           if (check.sentiment === true) {
             dates[date].positive++;
           } else if (check.sentiment === false) {
@@ -471,12 +472,14 @@ function Stats({ user }) {
             dates[date].neutral++;
           }
 
+          // Добавляем проверку в массив
+          const is_safe = !(check.violations && check.violations.length > 0);
           const checkData = {
             id: doc.id,
             date: checkDate,
             text: check.text || 'Сообщение',
             author: check.author || 'Неизвестен',
-            is_safe: !is_toxic,
+            is_safe: is_safe,
             sentiment: check.sentiment,
             violations: check.violations,
           };
