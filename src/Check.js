@@ -1,19 +1,24 @@
+// Компонент для проверки текста на наличие запрещенного контента
 import React, { useState } from 'react';
-import * as Mammoth from 'mammoth';
+import * as Mammoth from 'mammoth';  // Библиотека для работы с .docx файлами
 import './stylesCheck.css';
 
 function Check({ user }) {
-  const [text, setText] = useState("");
-  const [result, setResult] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [url, setUrl] = useState("");
+  // Состояния компонента
+  const [text, setText] = useState("");           // Текст для проверки
+  const [result, setResult] = useState(null);     // Результаты проверки
+  const [isLoading, setIsLoading] = useState(false);  // Состояние загрузки
+  const [url, setUrl] = useState("");            // URL для проверки
 
+  // Обработка загрузки файлов (.txt и .docx)
   const handleFileUpload = async (file) => {
     if (!file) return;
     if (file.type === "text/plain") {
+      // Обработка .txt файлов
       const text = await file.text();
       setText(text);
     } else if (file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
+      // Обработка .docx файлов
       const arrayBuffer = await file.arrayBuffer();
       Mammoth.extractRawText({ arrayBuffer })
         .then((result) => setText(result.value))
@@ -23,6 +28,7 @@ function Check({ user }) {
     }
   };
 
+  // Проверка введенного текста
   const handleCheck = async () => {
     if (isLoading) return;
     setResult(null);
@@ -47,6 +53,7 @@ function Check({ user }) {
     }
   };
 
+  // Проверка контента по URL
   const handleUrlCheck = async () => {
     if (isLoading) return;
     setResult(null);
@@ -71,9 +78,11 @@ function Check({ user }) {
     }
   };
 
+  // Рендер компонента
   return (
     <div className="check-page">
       <div className="check-content">
+        {/* Заголовок страницы */}
         <div className="check-header">
           <div className="header-icon">
             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -84,7 +93,9 @@ function Check({ user }) {
         </div>
 
         <div className="check-form">
+          {/* Секция ввода данных */}
           <div className="input-section">
+            {/* Поле для ввода URL */}
             <div className="input-group">
               <label>URL для проверки</label>
               <div className="input-with-button">
@@ -113,6 +124,7 @@ function Check({ user }) {
               </div>
             </div>
 
+            {/* Поле для ввода текста */}
             <div className="input-group">
               <label>Текст для проверки</label>
               <textarea
@@ -122,6 +134,7 @@ function Check({ user }) {
               />
             </div>
 
+            {/* Загрузка файла */}
             <div className="file-upload">
               <input 
                 type="file" 
@@ -138,6 +151,7 @@ function Check({ user }) {
               </label>
             </div>
 
+            {/* Кнопка проверки текста */}
             <button 
               onClick={handleCheck} 
               disabled={isLoading}
@@ -156,6 +170,7 @@ function Check({ user }) {
             </button>
           </div>
 
+          {/* Секция результатов проверки */}
           {result && (
             <div className="results-section">
               <h2>Результаты проверки</h2>

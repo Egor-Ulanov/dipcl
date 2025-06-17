@@ -9,19 +9,23 @@ import {
 } from "firebase/firestore";
 import './stylesHomePage.css';
 
-const CLOUDINARY_UPLOAD_PRESET = 'diplom'; // Вы получите это в настройках Cloudinary
-const CLOUDINARY_CLOUD_NAME = 'dh2qb7atd'; // Ваше cloud name из Cloudinary
+// Константы для работы с Cloudinary
+const CLOUDINARY_UPLOAD_PRESET = 'diplom';
+const CLOUDINARY_CLOUD_NAME = 'dh2qb7atd';
 
+// Основной компонент, принимает параметр isEditing для управления режимом редактирования
 function HomePage({ isEditing }) {
-  const [logoURL, setLogoURL] = useState("");
-  const [description, setDescription] = useState("");
-  const [images, setImages] = useState([]);
-  const [newLogo, setNewLogo] = useState(null);
-  const [newImages, setNewImages] = useState([]);
-  const [loading, setLoading] = useState(false);
+  // Состояния для хранения данных компании
+  const [logoURL, setLogoURL] = useState("");          // URL логотипа
+  const [description, setDescription] = useState("");   // Описание компании
+  const [images, setImages] = useState([]);            // Массив URL изображений галереи
+  const [newLogo, setNewLogo] = useState(null);        // Новый файл логотипа для загрузки
+  const [newImages, setNewImages] = useState([]);      // Новые файлы изображений для загрузки
+  const [loading, setLoading] = useState(false);       // Состояние загрузки
 
   const user = auth.currentUser;
 
+  // Загрузка данных пользователя при первом рендере
   useEffect(() => {
     const fetchData = async () => {
       if (user) {
@@ -38,6 +42,7 @@ function HomePage({ isEditing }) {
     fetchData();
   }, [user]);
 
+  // Функция для загрузки файлов в облачное хранилище Cloudinary
   const uploadToCloudinary = async (file) => {
     console.log('Начинаем загрузку в Cloudinary...');
     const formData = new FormData();
@@ -66,6 +71,7 @@ function HomePage({ isEditing }) {
     }
   };
 
+  // Обработчик загрузки нового логотипа
   const handleLogoUpload = async () => {
     if (newLogo && user) {
       try {
@@ -84,6 +90,7 @@ function HomePage({ isEditing }) {
     }
   };
 
+  // Обработчик загрузки новых изображений в галерею
   const handleImagesUpload = async () => {
     if (newImages.length > 0 && user) {
       try {
@@ -104,6 +111,7 @@ function HomePage({ isEditing }) {
     }
   };
 
+  // Сохранение описания компании в базу данных
   const handleDescriptionSave = async () => {
     if (user) {
       try {
@@ -119,6 +127,7 @@ function HomePage({ isEditing }) {
     }
   };
 
+  // Удаление изображения из галереи
   const handleDeleteImage = async (indexToDelete) => {
     try {
       const updatedImages = images.filter((_, index) => index !== indexToDelete);
@@ -132,6 +141,7 @@ function HomePage({ isEditing }) {
     }
   };
 
+  // Удаление логотипа компании
   const handleDeleteLogo = async () => {
     try {
       setLogoURL("");
@@ -144,6 +154,10 @@ function HomePage({ isEditing }) {
     }
   };
 
+  // Рендер компонента с тремя основными секциями:
+  // 1. Шапка с логотипом
+  // 2. Секция "О компании" с описанием
+  // 3. Галерея изображений
   return (
     <div className="homepage-container">
       <main className="main-content">

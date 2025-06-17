@@ -16,6 +16,7 @@ import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from './firebaseConfig';
 import './styleStats.css';
 
+// Регистрация необходимых компонентов для графиков
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -28,21 +29,24 @@ ChartJS.register(
   Legend
 );
 
+// Компонент статистики для визуализации данных о проверках текста
 function Stats({ user }) {
-  const [chartData, setChartData] = useState(null);
-  const [history, setHistory] = useState([]);
-  const [source, setSource] = useState('telegram');
-  const [reviewChartData, setReviewChartData] = useState(null);
-  const [error, setError] = useState(null);
-  const [periodType, setPeriodType] = useState('all');
-  const [customStartDate, setCustomStartDate] = useState(new Date());
-  const [customEndDate, setCustomEndDate] = useState(new Date());
-  const [showCustomPeriod, setShowCustomPeriod] = useState(false);
-  const [selectedMaster, setSelectedMaster] = useState('all');
-  const [masters, setMasters] = useState(['all']);
-  const [violators, setViolators] = useState([]);
-  const [chartType, setChartType] = useState('bar');
+  // Состояния для хранения данных и настроек отображения
+  const [chartData, setChartData] = useState(null);          // Данные для графика токсичности
+  const [history, setHistory] = useState([]);                // История проверок
+  const [source, setSource] = useState('telegram');          // Источник данных (telegram/personal)
+  const [reviewChartData, setReviewChartData] = useState(null);  // Данные для графика отзывов
+  const [error, setError] = useState(null);                  // Состояние ошибки
+  const [periodType, setPeriodType] = useState('all');       // Тип периода для фильтрации
+  const [customStartDate, setCustomStartDate] = useState(new Date());  // Начальная дата периода
+  const [customEndDate, setCustomEndDate] = useState(new Date());      // Конечная дата периода
+  const [showCustomPeriod, setShowCustomPeriod] = useState(false);    // Показ выбора периода
+  const [selectedMaster, setSelectedMaster] = useState('all');        // Выбранный мастер
+  const [masters, setMasters] = useState(['all']);                    // Список мастеров
+  const [violators, setViolators] = useState([]);                     // Список нарушителей
+  const [chartType, setChartType] = useState('bar');                  // Тип графика
 
+  // Фильтрация данных по выбранному временному периоду
   const filterDataByPeriod = (data, dates) => {
     if (periodType === 'all') {
       return { dates, data };
@@ -96,10 +100,11 @@ function Stats({ user }) {
         if (!filteredDates[dateStr]) {
           filteredDates[dateStr] = { safe: 0, toxic: 0 };
         }
-        if (item.is_safe) {
-          filteredDates[dateStr].safe++;
-        } else {
+        const is_toxic = item.violations && item.violations.includes("Токсичность");
+        if (is_toxic) {
           filteredDates[dateStr].toxic++;
+        } else {
+          filteredDates[dateStr].safe++;
         }
         return true;
       }
@@ -109,6 +114,7 @@ function Stats({ user }) {
     return { dates: filteredDates, data: filteredData };
   };
 
+  // Фильтрация данных по выбранному мастеру
   const filterDataByMaster = (data, dates) => {
     if (selectedMaster === 'all') {
       return { dates, data };
@@ -121,11 +127,11 @@ function Stats({ user }) {
         if (!filteredDates[dateStr]) {
           filteredDates[dateStr] = { safe: 0, toxic: 0 };
         }
-        const is_safe = item.result && item.result.is_safe;
-        if (is_safe) {
-          filteredDates[dateStr].safe++;
-        } else {
+        const is_toxic = item.violations && item.violations.includes("Токсичность");
+        if (is_toxic) {
           filteredDates[dateStr].toxic++;
+        } else {
+          filteredDates[dateStr].safe++;
         }
         return true;
       }
@@ -134,11 +140,11 @@ function Stats({ user }) {
         if (!filteredDates[dateStr]) {
           filteredDates[dateStr] = { safe: 0, toxic: 0 };
         }
-        const is_safe = item.result && item.result.is_safe;
-        if (is_safe) {
-          filteredDates[dateStr].safe++;
-        } else {
+        const is_toxic = item.violations && item.violations.includes("Токсичность");
+        if (is_toxic) {
           filteredDates[dateStr].toxic++;
+        } else {
+          filteredDates[dateStr].safe++;
         }
         return true;
       }
@@ -148,6 +154,7 @@ function Stats({ user }) {
     return { dates: filteredDates, data: filteredData };
   };
 
+  // Расчет статистики нарушителей и формирование топ-10
   const calculateViolators = (data) => {
     const violatorsMap = new Map();
 
@@ -166,10 +173,11 @@ function Stats({ user }) {
       const stats = violatorsMap.get(authorId);
       stats.totalMessages++;
 
-      if (check.toxic) {
+      // Считаем только по violations
+      if (check.violations && check.violations.includes("Токсичность")) {
         stats.toxicMessages++;
       }
-      if (check.spam) {
+      if (check.violations && check.violations.includes("Спам")) {
         stats.spamMessages++;
       }
 
@@ -181,6 +189,7 @@ function Stats({ user }) {
       .slice(0, 10);
   };
 
+  // Подготовка данных для графика токсичности сообщений
   const prepareChartData = (labels, safeCount, unsafeCount) => {
     return {
       labels,
@@ -203,6 +212,7 @@ function Stats({ user }) {
     };
   };
 
+  // Подготовка данных для графика отзывов с учетом типа диаграммы
   const prepareReviewChartData = (labels, reviews) => {
     if (chartType === 'pie' || chartType === 'doughnut') {
       const totalReviews = reviews.reduce((acc, curr) => acc + curr, 0);
@@ -257,7 +267,9 @@ function Stats({ user }) {
     };
   };
 
+  // Эффект для загрузки и обновления данных при изменении фильтров
   useEffect(() => {
+    // Загрузка данных из Telegram-групп
     const fetchTelegramChecks = async () => {
       if (!user?.email) {
         setError('Пользователь не авторизован');
@@ -300,11 +312,11 @@ function Stats({ user }) {
             }
 
             // Подсчитываем статистику безопасности
-            const is_safe = check.result && check.result.is_safe;
-            if (is_safe) {
-              dates[date].safe++;
-            } else {
+            const is_toxic = check.violations && check.violations.includes("Токсичность");
+            if (is_toxic) {
               dates[date].toxic++;
+            } else {
+              dates[date].safe++;
             }
 
             // Подсчитываем отзывы
@@ -323,9 +335,9 @@ function Stats({ user }) {
               text: check.text || 'Сообщение',
               author: check.author || 'Неизвестен',
               master: check.master,
-              is_safe: is_safe,
+              is_safe: !is_toxic,
               sentiment: check.sentiment,
-              violations: check.result?.violations || [],
+              violations: check.violations || [],
             };
             
             dates[date].checks.push(checkData);
@@ -411,6 +423,7 @@ function Stats({ user }) {
       }
     };
 
+    // Загрузка данных из личных проверок пользователя
     const fetchPersonalChecks = async () => {
       if (!user?.email) {
         setError('Пользователь не авторизован');
@@ -442,10 +455,11 @@ function Stats({ user }) {
           }
 
           // Подсчитываем статистику безопасности
-          if (check.result.is_safe) {
-            dates[date].safe++;
-          } else {
+          const is_toxic = check.violations && check.violations.includes("Токсичность");
+          if (is_toxic) {
             dates[date].toxic++;
+          } else {
+            dates[date].safe++;
           }
 
           // Подсчитываем отзывы (если есть)
@@ -462,9 +476,9 @@ function Stats({ user }) {
             date: checkDate,
             text: check.text || 'Сообщение',
             author: check.author || 'Неизвестен',
-            is_safe: check.result.is_safe,
+            is_safe: !is_toxic,
             sentiment: check.sentiment,
-            violations: check.result.violations,
+            violations: check.violations,
           };
 
           dates[date].checks.push(checkData);
