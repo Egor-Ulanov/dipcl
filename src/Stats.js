@@ -173,11 +173,12 @@ function Stats({ user }) {
       const stats = violatorsMap.get(authorId);
       stats.totalMessages++;
 
-      // Считаем только по violations
-      if (check.violations && check.violations.includes("Токсичность")) {
+      // Используем violations из check
+      const violations = check.violations || [];
+      if (violations.includes("Токсичность")) {
         stats.toxicMessages++;
       }
-      if (check.violations && check.violations.includes("Спам")) {
+      if (violations.includes("Спам")) {
         stats.spamMessages++;
       }
 
@@ -311,8 +312,11 @@ function Stats({ user }) {
               };
             }
 
+            // Используем violations из result, если есть, иначе из корня
+            const violations = (check.result && check.result.violations) ? check.result.violations : (check.violations || []);
+
             // Подсчитываем статистику безопасности для графика
-            const is_toxic = check.violations && check.violations.includes("Токсичность");
+            const is_toxic = violations.includes("Токсичность");
             if (is_toxic) {
               dates[date].toxic++;
             } else {
@@ -329,7 +333,7 @@ function Stats({ user }) {
             }
 
             // Добавляем проверку в массив
-            const is_safe = !(check.violations && check.violations.length > 0);
+            const is_safe = !(violations && violations.length > 0);
             const checkData = {
               id: doc.id,
               date: checkDate,
@@ -338,7 +342,7 @@ function Stats({ user }) {
               master: check.master,
               is_safe: is_safe,
               sentiment: check.sentiment,
-              violations: check.violations || [],
+              violations: violations,
             };
             
             dates[date].checks.push(checkData);
@@ -455,8 +459,11 @@ function Stats({ user }) {
             };
           }
 
+          // Используем violations из result, если есть, иначе из корня
+          const violations = (check.result && check.result.violations) ? check.result.violations : (check.violations || []);
+
           // Подсчитываем статистику безопасности для графика
-          const is_toxic = check.violations && check.violations.includes("Токсичность");
+          const is_toxic = violations.includes("Токсичность");
           if (is_toxic) {
             dates[date].toxic++;
           } else {
@@ -473,7 +480,7 @@ function Stats({ user }) {
           }
 
           // Добавляем проверку в массив
-          const is_safe = !(check.violations && check.violations.length > 0);
+          const is_safe = !(violations && violations.length > 0);
           const checkData = {
             id: doc.id,
             date: checkDate,
@@ -481,7 +488,7 @@ function Stats({ user }) {
             author: check.author || 'Неизвестен',
             is_safe: is_safe,
             sentiment: check.sentiment,
-            violations: check.violations,
+            violations: violations,
           };
 
           dates[date].checks.push(checkData);
