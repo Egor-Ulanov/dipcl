@@ -45,6 +45,8 @@ function Stats({ user }) {
   const [masters, setMasters] = useState(['all']);                    // Список мастеров
   const [violators, setViolators] = useState([]);                     // Список нарушителей
   const [chartType, setChartType] = useState('bar');                  // Тип графика
+  const [selectedGroupId, setSelectedGroupId] = useState('all'); // выбранная группа
+  const [groupList, setGroupList] = useState([]); // список групп
 
   // Фильтрация данных по выбранному временному периоду
   const filterDataByPeriod = (data, dates) => {
@@ -295,12 +297,17 @@ function Stats({ user }) {
         const groupsRef = collection(db, 'groups');
         const groupDocs = await getDocs(query(groupsRef, where('info.admin_email', '==', user.email)));
         
+        const groupArr = [];
         const dates = {};
         const uniqueMasters = new Set(['all', 'no-master']);
         const allChecks = [];
 
         for (const groupDoc of groupDocs.docs) {
           const groupId = groupDoc.id;
+          const groupTitle = groupDoc.data().info?.title || groupId;
+          groupArr.push({ id: groupId, title: groupTitle });
+          // Если выбрана конкретная группа, пропускаем остальные
+          if (selectedGroupId !== 'all' && groupId !== selectedGroupId) continue;
           const checksRef = collection(db, 'groups', groupId, 'checks');
           const checksSnapshot = await getDocs(checksRef);
 
@@ -344,6 +351,8 @@ function Stats({ user }) {
                 is_safe: is_safe,
                 sentences: check.sentences,
                 is_review: is_review,
+                groupId: groupId,
+                groupTitle: groupTitle,
               };
               dates[dateStr].checks.push(checkData);
               allChecks.push(checkData);
@@ -361,6 +370,8 @@ function Stats({ user }) {
                 is_safe: is_safe,
                 violations: violations,
                 is_review: is_review,
+                groupId: groupId,
+                groupTitle: groupTitle,
               };
               const is_toxic = violations.includes("Токсичность");
               if (is_toxic) {
@@ -374,6 +385,7 @@ function Stats({ user }) {
           });
         }
 
+        setGroupList(groupArr);
         setMasters(Array.from(uniqueMasters));
 
         let filtered = filterDataByPeriod(allChecks, dates);
@@ -624,7 +636,7 @@ function Stats({ user }) {
     } else {
       fetchPersonalChecks();
     }
-  }, [source, user?.email, periodType, customStartDate, customEndDate, selectedMaster, chartType]);
+  }, [source, user?.email, periodType, customStartDate, customEndDate, selectedMaster, chartType, selectedGroupId]);
 
   const handlePeriodChange = (e) => {
     const value = e.target.value;
@@ -655,6 +667,18 @@ function Stats({ user }) {
           <option value="telegram">Telegram-группы</option>
           <option value="personal">Личные проверки</option>
         </select>
+        {source === 'telegram' && groupList.length > 1 && (
+          <select
+            className="group-select"
+            value={selectedGroupId}
+            onChange={e => setSelectedGroupId(e.target.value)}
+          >
+            <option value="all">Все группы</option>
+            {groupList.map(g => (
+              <option key={g.id} value={g.id}>{g.title} ({g.id})</option>
+            ))}
+          </select>
+        )}
         <select className="period-select" value={periodType} onChange={handlePeriodChange}>
           <option value="all">Весь период</option>
           <option value="day">Последний день</option>
