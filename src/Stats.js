@@ -363,56 +363,45 @@ function Stats({ user }) {
         const safeCount = labels.map(date => filtered.dates[date].safe || 0);
         const unsafeCount = labels.map(date => filtered.dates[date].toxic || 0);
 
-        // Подготавливаем данные для отзывов
-        const positiveCount = labels.map(date => filtered.dates[date].positive || 0);
-        const neutralCount = labels.map(date => filtered.dates[date].neutral || 0);
-        const negativeCount = labels.map(date => filtered.dates[date].negative || 0);
-
         setChartData(prepareChartData(labels, safeCount, unsafeCount));
         
-        // Для круговых диаграмм суммируем все значения
-        const totalPositive = positiveCount.reduce((a, b) => a + b, 0);
-        const totalNeutral = neutralCount.reduce((a, b) => a + b, 0);
-        const totalNegative = negativeCount.reduce((a, b) => a + b, 0);
+        // График отзывов только по is_review/review === true
+        const reviewChecks = filtered.data.filter(
+          item => item.is_review === true || item.review === true
+        );
+        const reviewLabels = reviewChecks.map(item => item.date.toLocaleDateString());
+        const reviewPositiveCount = reviewChecks.filter(item => item.sentiment === "positive").length;
+        const reviewNegativeCount = reviewChecks.filter(item => item.sentiment === "negative").length;
 
         const reviewData = chartType === 'pie' || chartType === 'doughnut'
           ? {
-              labels: ['Положительные', 'Нейтральные', 'Негативные'],
+              labels: ['Положительные', 'Отрицательные'],
               datasets: [{
-                data: [totalPositive, totalNeutral, totalNegative],
+                data: [reviewPositiveCount, reviewNegativeCount],
                 backgroundColor: [
                   'rgba(75, 192, 192, 0.5)',
-                  'rgba(255, 206, 86, 0.5)',
                   'rgba(255, 99, 132, 0.5)',
                 ],
                 borderColor: [
                   'rgba(75, 192, 192, 1)',
-                  'rgba(255, 206, 86, 1)',
                   'rgba(255, 99, 132, 1)',
                 ],
                 borderWidth: 1,
               }],
             }
           : {
-              labels,
+              labels: reviewLabels,
               datasets: [
                 {
                   label: 'Положительные',
-                  data: positiveCount,
+                  data: reviewChecks.map(item => item.sentiment === "positive" ? 1 : 0),
                   backgroundColor: 'rgba(75, 192, 192, 0.5)',
                   borderColor: 'rgba(75, 192, 192, 1)',
                   borderWidth: 1,
                 },
                 {
-                  label: 'Нейтральные',
-                  data: neutralCount,
-                  backgroundColor: 'rgba(255, 206, 86, 0.5)',
-                  borderColor: 'rgba(255, 206, 86, 1)',
-                  borderWidth: 1,
-                },
-                {
-                  label: 'Негативные',
-                  data: negativeCount,
+                  label: 'Отрицательные',
+                  data: reviewChecks.map(item => item.sentiment === "negative" ? 1 : 0),
                   backgroundColor: 'rgba(255, 99, 132, 0.5)',
                   borderColor: 'rgba(255, 99, 132, 1)',
                   borderWidth: 1,
@@ -504,54 +493,43 @@ function Stats({ user }) {
 
         setChartData(prepareChartData(labels, safeCount, unsafeCount));
 
-        // Подготавливаем данные для отзывов
-        const positiveCount = labels.map(date => filtered.dates[date].positive || 0);
-        const neutralCount = labels.map(date => filtered.dates[date].neutral || 0);
-        const negativeCount = labels.map(date => filtered.dates[date].negative || 0);
-
-        // Для круговых диаграмм суммируем все значения
-        const totalPositive = positiveCount.reduce((a, b) => a + b, 0);
-        const totalNeutral = neutralCount.reduce((a, b) => a + b, 0);
-        const totalNegative = negativeCount.reduce((a, b) => a + b, 0);
+        // График отзывов только по is_review/review === true
+        const reviewChecks = filtered.data.filter(
+          item => item.is_review === true || item.review === true
+        );
+        const reviewLabels = reviewChecks.map(item => item.date.toLocaleDateString());
+        const reviewPositiveCount = reviewChecks.filter(item => item.sentiment === "positive").length;
+        const reviewNegativeCount = reviewChecks.filter(item => item.sentiment === "negative").length;
 
         const reviewData = chartType === 'pie' || chartType === 'doughnut'
           ? {
-              labels: ['Положительные', 'Нейтральные', 'Негативные'],
+              labels: ['Положительные', 'Отрицательные'],
               datasets: [{
-                data: [totalPositive, totalNeutral, totalNegative],
+                data: [reviewPositiveCount, reviewNegativeCount],
                 backgroundColor: [
                   'rgba(75, 192, 192, 0.5)',
-                  'rgba(255, 206, 86, 0.5)',
                   'rgba(255, 99, 132, 0.5)',
                 ],
                 borderColor: [
                   'rgba(75, 192, 192, 1)',
-                  'rgba(255, 206, 86, 1)',
                   'rgba(255, 99, 132, 1)',
                 ],
                 borderWidth: 1,
               }],
             }
           : {
-              labels,
+              labels: reviewLabels,
               datasets: [
                 {
                   label: 'Положительные',
-                  data: positiveCount,
+                  data: reviewChecks.map(item => item.sentiment === "positive" ? 1 : 0),
                   backgroundColor: 'rgba(75, 192, 192, 0.5)',
                   borderColor: 'rgba(75, 192, 192, 1)',
                   borderWidth: 1,
                 },
                 {
-                  label: 'Нейтральные',
-                  data: neutralCount,
-                  backgroundColor: 'rgba(255, 206, 86, 0.5)',
-                  borderColor: 'rgba(255, 206, 86, 1)',
-                  borderWidth: 1,
-                },
-                {
-                  label: 'Негативные',
-                  data: negativeCount,
+                  label: 'Отрицательные',
+                  data: reviewChecks.map(item => item.sentiment === "negative" ? 1 : 0),
                   backgroundColor: 'rgba(255, 99, 132, 0.5)',
                   borderColor: 'rgba(255, 99, 132, 1)',
                   borderWidth: 1,
