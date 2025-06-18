@@ -472,13 +472,6 @@ function Stats({ user }) {
             dates[dateStr].safe++;
           }
 
-          // Подсчитываем отзывы (оставить как есть)
-          if (check.sentiment === true) {
-            dates[dateStr].positive++;
-          } else if (check.sentiment === false) {
-            dates[dateStr].negative++;
-          }
-
           // Добавляем проверку в массив
           const is_safe = !(violations && violations.length > 0);
           const is_review = check.is_review === true || check.review === true;
@@ -492,7 +485,6 @@ function Stats({ user }) {
             violations: violations,
             is_review: is_review,
           };
-
           dates[dateStr].checks.push(checkData);
           data.push(checkData);
         });
@@ -506,7 +498,7 @@ function Stats({ user }) {
 
         setChartData(prepareChartData(labels, safeCount, unsafeCount));
 
-        // График отзывов только по is_review/review === true
+        // График отзывов только по is_review === true, группировка по дате
         const reviewChecks = filtered.data.filter(item => item.is_review === true);
         const reviewByDate = {};
         reviewChecks.forEach(item => {
@@ -518,7 +510,6 @@ function Stats({ user }) {
               reviewByDate[d] = { positive: 0, negative: 1 };
             }
           } else {
-            // Если уже есть, не перезаписываем positive, но если был только negative, а теперь positive — заменяем
             if (item.sentiment === "positive") {
               reviewByDate[d] = { positive: 1, negative: 0 };
             }
