@@ -166,6 +166,7 @@ function Stats({ user }) {
           totalMessages: 0,
           toxicMessages: 0,
           spamMessages: 0,
+          violationChecks: 0, // Количество проверок с хотя бы одним нарушением
           violationRate: 0
         });
       }
@@ -173,24 +174,29 @@ function Stats({ user }) {
       const stats = violatorsMap.get(authorId);
       stats.totalMessages++;
 
+      let hasToxic = false;
+      let hasSpam = false;
+      let hasAnyViolation = false;
       // Новый формат: если есть sentences, считаем по предложениям
       if (Array.isArray(check.sentences)) {
-        let hasToxic = false;
-        let hasSpam = false;
         check.sentences.forEach(sent => {
           if (sent.violations && sent.violations.includes("Токсичность")) hasToxic = true;
           if (sent.violations && sent.violations.includes("Спам")) hasSpam = true;
         });
+        hasAnyViolation = hasToxic || hasSpam;
         if (hasToxic) stats.toxicMessages++;
         if (hasSpam) stats.spamMessages++;
       } else {
         // Старый формат
         const violations = check.violations || [];
-        if (violations.includes("Токсичность")) stats.toxicMessages++;
-        if (violations.includes("Спам")) stats.spamMessages++;
+        if (violations.includes("Токсичность")) hasToxic = true;
+        if (violations.includes("Спам")) hasSpam = true;
+        hasAnyViolation = hasToxic || hasSpam;
+        if (hasToxic) stats.toxicMessages++;
+        if (hasSpam) stats.spamMessages++;
       }
-
-      stats.violationRate = ((stats.toxicMessages + stats.spamMessages) / stats.totalMessages) * 100;
+      if (hasAnyViolation) stats.violationChecks++;
+      stats.violationRate = (stats.violationChecks / stats.totalMessages) * 100;
     });
 
     return Array.from(violatorsMap.values())
