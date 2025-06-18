@@ -299,14 +299,13 @@ function Stats({ user }) {
             }
 
             const checkDate = check.date.toDate();
-            const date = checkDate.toISOString().split('T')[0];
+            const dateStr = checkDate.toLocaleDateString();
 
-            if (!dates[date]) {
-              dates[date] = {
+            if (!dates[dateStr]) {
+              dates[dateStr] = {
                 safe: 0,
                 toxic: 0,
                 positive: 0,
-                neutral: 0,
                 negative: 0,
                 checks: []
               };
@@ -318,18 +317,16 @@ function Stats({ user }) {
             // Подсчитываем статистику безопасности для графика
             const is_toxic = violations.includes("Токсичность");
             if (is_toxic) {
-              dates[date].toxic++;
+              dates[dateStr].toxic++;
             } else {
-              dates[date].safe++;
+              dates[dateStr].safe++;
             }
 
             // Подсчитываем отзывы (оставить как есть)
             if (check.sentiment === true) {
-              dates[date].positive++;
+              dates[dateStr].positive++;
             } else if (check.sentiment === false) {
-              dates[date].negative++;
-            } else {
-              dates[date].neutral++;
+              dates[dateStr].negative++;
             }
 
             // Добавляем проверку в массив
@@ -347,7 +344,7 @@ function Stats({ user }) {
               is_review: is_review,
             };
             
-            dates[date].checks.push(checkData);
+            dates[dateStr].checks.push(checkData);
             allChecks.push(checkData);
           });
         }
@@ -369,10 +366,27 @@ function Stats({ user }) {
         
         // График отзывов только по is_review/review === true
         const reviewChecks = filtered.data.filter(item => item.is_review === true);
-        const reviewLabels = reviewChecks.map(item => item.date.toLocaleDateString());
-        const reviewPositiveCount = reviewChecks.filter(item => item.sentiment === "positive").length;
-        const reviewNegativeCount = reviewChecks.filter(item => item.sentiment === "negative").length;
-
+        const reviewByDate = {};
+        reviewChecks.forEach(item => {
+          const d = item.date.toLocaleDateString();
+          if (!reviewByDate[d]) {
+            if (item.sentiment === "positive") {
+              reviewByDate[d] = { positive: 1, negative: 0 };
+            } else if (item.sentiment === "negative") {
+              reviewByDate[d] = { positive: 0, negative: 1 };
+            }
+          } else {
+            // Если уже есть, не перезаписываем positive, но если был только negative, а теперь positive — заменяем
+            if (item.sentiment === "positive") {
+              reviewByDate[d] = { positive: 1, negative: 0 };
+            }
+          }
+        });
+        const reviewLabels = Object.keys(reviewByDate);
+        const reviewPositiveArr = reviewLabels.map(d => reviewByDate[d].positive);
+        const reviewNegativeArr = reviewLabels.map(d => reviewByDate[d].negative);
+        const reviewPositiveCount = reviewPositiveArr.reduce((a, b) => a + b, 0);
+        const reviewNegativeCount = reviewNegativeArr.reduce((a, b) => a + b, 0);
         const reviewData = chartType === 'pie' || chartType === 'doughnut'
           ? {
               labels: ['Положительные', 'Отрицательные'],
@@ -394,14 +408,14 @@ function Stats({ user }) {
               datasets: [
                 {
                   label: 'Положительные',
-                  data: reviewChecks.map(item => item.sentiment === "positive" ? 1 : 0),
+                  data: reviewPositiveArr,
                   backgroundColor: 'rgba(75, 192, 192, 0.5)',
                   borderColor: 'rgba(75, 192, 192, 1)',
                   borderWidth: 1,
                 },
                 {
                   label: 'Отрицательные',
-                  data: reviewChecks.map(item => item.sentiment === "negative" ? 1 : 0),
+                  data: reviewNegativeArr,
                   backgroundColor: 'rgba(255, 99, 132, 0.5)',
                   borderColor: 'rgba(255, 99, 132, 1)',
                   borderWidth: 1,
@@ -435,14 +449,13 @@ function Stats({ user }) {
           const check = doc.data();
           if (!check.date) return;
           const checkDate = check.date.toDate();
-          const date = checkDate.toISOString().split('T')[0];
+          const dateStr = checkDate.toLocaleDateString();
 
-          if (!dates[date]) {
-            dates[date] = {
+          if (!dates[dateStr]) {
+            dates[dateStr] = {
               safe: 0,
               toxic: 0,
               positive: 0,
-              neutral: 0,
               negative: 0,
               checks: []
             };
@@ -454,18 +467,16 @@ function Stats({ user }) {
           // Подсчитываем статистику безопасности для графика
           const is_toxic = violations.includes("Токсичность");
           if (is_toxic) {
-            dates[date].toxic++;
+            dates[dateStr].toxic++;
           } else {
-            dates[date].safe++;
+            dates[dateStr].safe++;
           }
 
           // Подсчитываем отзывы (оставить как есть)
           if (check.sentiment === true) {
-            dates[date].positive++;
+            dates[dateStr].positive++;
           } else if (check.sentiment === false) {
-            dates[date].negative++;
-          } else {
-            dates[date].neutral++;
+            dates[dateStr].negative++;
           }
 
           // Добавляем проверку в массив
@@ -482,7 +493,7 @@ function Stats({ user }) {
             is_review: is_review,
           };
 
-          dates[date].checks.push(checkData);
+          dates[dateStr].checks.push(checkData);
           data.push(checkData);
         });
 
@@ -497,10 +508,27 @@ function Stats({ user }) {
 
         // График отзывов только по is_review/review === true
         const reviewChecks = filtered.data.filter(item => item.is_review === true);
-        const reviewLabels = reviewChecks.map(item => item.date.toLocaleDateString());
-        const reviewPositiveCount = reviewChecks.filter(item => item.sentiment === "positive").length;
-        const reviewNegativeCount = reviewChecks.filter(item => item.sentiment === "negative").length;
-
+        const reviewByDate = {};
+        reviewChecks.forEach(item => {
+          const d = item.date.toLocaleDateString();
+          if (!reviewByDate[d]) {
+            if (item.sentiment === "positive") {
+              reviewByDate[d] = { positive: 1, negative: 0 };
+            } else if (item.sentiment === "negative") {
+              reviewByDate[d] = { positive: 0, negative: 1 };
+            }
+          } else {
+            // Если уже есть, не перезаписываем positive, но если был только negative, а теперь positive — заменяем
+            if (item.sentiment === "positive") {
+              reviewByDate[d] = { positive: 1, negative: 0 };
+            }
+          }
+        });
+        const reviewLabels = Object.keys(reviewByDate);
+        const reviewPositiveArr = reviewLabels.map(d => reviewByDate[d].positive);
+        const reviewNegativeArr = reviewLabels.map(d => reviewByDate[d].negative);
+        const reviewPositiveCount = reviewPositiveArr.reduce((a, b) => a + b, 0);
+        const reviewNegativeCount = reviewNegativeArr.reduce((a, b) => a + b, 0);
         const reviewData = chartType === 'pie' || chartType === 'doughnut'
           ? {
               labels: ['Положительные', 'Отрицательные'],
@@ -522,14 +550,14 @@ function Stats({ user }) {
               datasets: [
                 {
                   label: 'Положительные',
-                  data: reviewChecks.map(item => item.sentiment === "positive" ? 1 : 0),
+                  data: reviewPositiveArr,
                   backgroundColor: 'rgba(75, 192, 192, 0.5)',
                   borderColor: 'rgba(75, 192, 192, 1)',
                   borderWidth: 1,
                 },
                 {
                   label: 'Отрицательные',
-                  data: reviewChecks.map(item => item.sentiment === "negative" ? 1 : 0),
+                  data: reviewNegativeArr,
                   backgroundColor: 'rgba(255, 99, 132, 0.5)',
                   borderColor: 'rgba(255, 99, 132, 1)',
                   borderWidth: 1,
