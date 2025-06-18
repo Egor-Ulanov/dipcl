@@ -311,41 +311,52 @@ function Stats({ user }) {
               };
             }
 
-            // Используем violations из result, если есть, иначе из корня
-            const violations = (check.result && check.result.violations) ? check.result.violations : (check.violations || []);
-
-            // Подсчитываем статистику безопасности для графика
-            const is_toxic = violations.includes("Токсичность");
-            if (is_toxic) {
-              dates[dateStr].toxic++;
+            // Новый формат: sentences — одна проверка = один блок
+            if (Array.isArray(check.sentences)) {
+              const hasViolation = check.sentences.some(sent => sent.violations && sent.violations.length > 0);
+              const is_safe = !hasViolation;
+              if (hasViolation) {
+                dates[dateStr].toxic++;
+              } else {
+                dates[dateStr].safe++;
+              }
+              const is_review = check.sentences.some(sent => sent.is_review === true);
+              const checkData = {
+                id: doc.id,
+                date: checkDate,
+                text: check.text || check.sentences.map(s => s.text).join(' '),
+                author: check.author || 'Неизвестен',
+                master: check.master,
+                is_safe: is_safe,
+                sentences: check.sentences,
+                is_review: is_review,
+              };
+              dates[dateStr].checks.push(checkData);
+              allChecks.push(checkData);
             } else {
-              dates[dateStr].safe++;
+              // Старый формат
+              const violations = (check.result && check.result.violations) ? check.result.violations : (check.violations || []);
+              const is_safe = !(violations && violations.length > 0);
+              const is_review = check.is_review === true || check.review === true;
+              const checkData = {
+                id: doc.id,
+                date: checkDate,
+                text: check.text || 'Сообщение',
+                author: check.author || 'Неизвестен',
+                master: check.master,
+                is_safe: is_safe,
+                violations: violations,
+                is_review: is_review,
+              };
+              const is_toxic = violations.includes("Токсичность");
+              if (is_toxic) {
+                dates[dateStr].toxic++;
+              } else {
+                dates[dateStr].safe++;
+              }
+              dates[dateStr].checks.push(checkData);
+              allChecks.push(checkData);
             }
-
-            // Подсчитываем отзывы (оставить как есть)
-            if (check.sentiment === true) {
-              dates[dateStr].positive++;
-            } else if (check.sentiment === false) {
-              dates[dateStr].negative++;
-            }
-
-            // Добавляем проверку в массив
-            const is_safe = !(violations && violations.length > 0);
-            const is_review = check.is_review === true || check.review === true;
-            const checkData = {
-              id: doc.id,
-              date: checkDate,
-              text: check.text || 'Сообщение',
-              author: check.author || 'Неизвестен',
-              master: check.master,
-              is_safe: is_safe,
-              sentiment: check.sentiment,
-              violations: violations,
-              is_review: is_review,
-            };
-            
-            dates[dateStr].checks.push(checkData);
-            allChecks.push(checkData);
           });
         }
 
@@ -369,17 +380,20 @@ function Stats({ user }) {
         const reviewByDate = {};
         reviewChecks.forEach(item => {
           const d = item.date.toLocaleDateString();
-          if (!reviewByDate[d]) {
-            if (item.sentiment === "positive") {
-              reviewByDate[d] = { positive: 1, negative: 0 };
-            } else if (item.sentiment === "negative") {
-              reviewByDate[d] = { positive: 0, negative: 1 };
+          if (item.sentences) {
+            const pos = item.sentences.filter(s => s.sentiment === "positive").length;
+            const neg = item.sentences.filter(s => s.sentiment === "negative").length;
+            if (!reviewByDate[d]) {
+              reviewByDate[d] = { positive: 0, negative: 0 };
             }
+            if (pos > neg) reviewByDate[d].positive++;
+            else if (neg > pos) reviewByDate[d].negative++;
           } else {
-            // Если уже есть, не перезаписываем positive, но если был только negative, а теперь positive — заменяем
-            if (item.sentiment === "positive") {
-              reviewByDate[d] = { positive: 1, negative: 0 };
+            if (!reviewByDate[d]) {
+              reviewByDate[d] = { positive: 0, negative: 0 };
             }
+            if (item.sentiment === "positive") reviewByDate[d].positive++;
+            else if (item.sentiment === "negative") reviewByDate[d].negative++;
           }
         });
         const reviewLabels = Object.keys(reviewByDate);
@@ -776,6 +790,7 @@ function Stats({ user }) {
               <li key={check.id} className={`check-item ${check.is_safe ? 'safe' : 'toxic'}`}>
                 <div className="check-header">
                   <span className="check-date">{check.date.toLocaleDateString()}</span>
+                  {check.master && <span className="check-master">Мастер: {check.master}</span>}
                 </div>
                 <p className="check-status">
                   <strong>Результат:</strong>{' '}
