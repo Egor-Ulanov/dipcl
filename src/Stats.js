@@ -334,6 +334,7 @@ function Stats({ user }) {
 
             // Добавляем проверку в массив
             const is_safe = !(violations && violations.length > 0);
+            const is_review = check.is_review === true || check.review === true;
             const checkData = {
               id: doc.id,
               date: checkDate,
@@ -343,6 +344,7 @@ function Stats({ user }) {
               is_safe: is_safe,
               sentiment: check.sentiment,
               violations: violations,
+              is_review: is_review,
             };
             
             dates[date].checks.push(checkData);
@@ -366,9 +368,7 @@ function Stats({ user }) {
         setChartData(prepareChartData(labels, safeCount, unsafeCount));
         
         // График отзывов только по is_review/review === true
-        const reviewChecks = filtered.data.filter(
-          item => item.is_review === true || item.review === true
-        );
+        const reviewChecks = filtered.data.filter(item => item.is_review === true);
         const reviewLabels = reviewChecks.map(item => item.date.toLocaleDateString());
         const reviewPositiveCount = reviewChecks.filter(item => item.sentiment === "positive").length;
         const reviewNegativeCount = reviewChecks.filter(item => item.sentiment === "negative").length;
@@ -470,6 +470,7 @@ function Stats({ user }) {
 
           // Добавляем проверку в массив
           const is_safe = !(violations && violations.length > 0);
+          const is_review = check.is_review === true || check.review === true;
           const checkData = {
             id: doc.id,
             date: checkDate,
@@ -478,6 +479,7 @@ function Stats({ user }) {
             is_safe: is_safe,
             sentiment: check.sentiment,
             violations: violations,
+            is_review: is_review,
           };
 
           dates[date].checks.push(checkData);
@@ -494,9 +496,7 @@ function Stats({ user }) {
         setChartData(prepareChartData(labels, safeCount, unsafeCount));
 
         // График отзывов только по is_review/review === true
-        const reviewChecks = filtered.data.filter(
-          item => item.is_review === true || item.review === true
-        );
+        const reviewChecks = filtered.data.filter(item => item.is_review === true);
         const reviewLabels = reviewChecks.map(item => item.date.toLocaleDateString());
         const reviewPositiveCount = reviewChecks.filter(item => item.sentiment === "positive").length;
         const reviewNegativeCount = reviewChecks.filter(item => item.sentiment === "negative").length;
