@@ -461,32 +461,55 @@ function Stats({ user }) {
             };
           }
 
-          // Используем violations из result, если есть, иначе из корня
-          const violations = (check.result && check.result.violations) ? check.result.violations : (check.violations || []);
-
-          // Подсчитываем статистику безопасности для графика
-          const is_toxic = violations.includes("Токсичность");
-          if (is_toxic) {
-            dates[dateStr].toxic++;
+          // Если есть sentences — разворачиваем каждое предложение как отдельную проверку
+          if (Array.isArray(check.sentences)) {
+            check.sentences.forEach(sent => {
+              const is_safe = sent.is_safe;
+              const is_review = sent.is_review === true;
+              const checkData = {
+                id: doc.id + '_' + sent.text,
+                date: checkDate,
+                text: sent.text,
+                author: check.author || 'Неизвестен',
+                is_safe: is_safe,
+                sentiment: sent.sentiment,
+                violations: sent.violations || [],
+                is_review: is_review,
+              };
+              // Статистика для графика
+              const is_toxic = sent.violations && sent.violations.includes("Токсичность");
+              if (is_toxic) {
+                dates[dateStr].toxic++;
+              } else {
+                dates[dateStr].safe++;
+              }
+              dates[dateStr].checks.push(checkData);
+              data.push(checkData);
+            });
           } else {
-            dates[dateStr].safe++;
+            // Старый формат
+            const violations = (check.result && check.result.violations) ? check.result.violations : (check.violations || []);
+            const is_safe = !(violations && violations.length > 0);
+            const is_review = check.is_review === true || check.review === true;
+            const checkData = {
+              id: doc.id,
+              date: checkDate,
+              text: check.text || 'Сообщение',
+              author: check.author || 'Неизвестен',
+              is_safe: is_safe,
+              sentiment: check.sentiment,
+              violations: violations,
+              is_review: is_review,
+            };
+            const is_toxic = violations.includes("Токсичность");
+            if (is_toxic) {
+              dates[dateStr].toxic++;
+            } else {
+              dates[dateStr].safe++;
+            }
+            dates[dateStr].checks.push(checkData);
+            data.push(checkData);
           }
-
-          // Добавляем проверку в массив
-          const is_safe = !(violations && violations.length > 0);
-          const is_review = check.is_review === true || check.review === true;
-          const checkData = {
-            id: doc.id,
-            date: checkDate,
-            text: check.text || 'Сообщение',
-            author: check.author || 'Неизвестен',
-            is_safe: is_safe,
-            sentiment: check.sentiment,
-            violations: violations,
-            is_review: is_review,
-          };
-          dates[dateStr].checks.push(checkData);
-          data.push(checkData);
         });
 
         const filtered = filterDataByPeriod(data, dates);
