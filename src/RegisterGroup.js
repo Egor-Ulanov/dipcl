@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { doc, setDoc } from 'firebase/firestore';
+import React, { useState, useEffect } from 'react';
+import { doc, setDoc, deleteDoc, getDocs, query, collection, where } from 'firebase/firestore';
 import { db } from './firebaseConfig';
 import './styleRegisterGroup.css';
 
@@ -8,6 +8,27 @@ function RegisterGroup({ user }) {
   const [groupTitle, setGroupTitle] = useState('');
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState(''); // 'success' или 'error'
+  const [userGroups, setUserGroups] = useState([]); // список групп пользователя
+
+  // Загрузка групп пользователя
+  useEffect(() => {
+    const fetchGroups = async () => {
+      if (!user?.email) return;
+      try {
+        const groupsRef = collection(db, 'groups');
+        const q = query(groupsRef, where('info.admin_email', '==', user.email));
+        const snap = await getDocs(q);
+        const arr = [];
+        snap.forEach(doc => {
+          arr.push({ id: doc.id, title: doc.data().info?.title || doc.id });
+        });
+        setUserGroups(arr);
+      } catch (e) {
+        setUserGroups([]);
+      }
+    };
+    fetchGroups();
+  }, [user?.email, message]);
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -40,6 +61,20 @@ function RegisterGroup({ user }) {
     } catch (error) {
       console.error('Ошибка при записи в Firestore:', error);
       setMessage('Не удалось зарегистрировать группу. Попробуйте еще раз.');
+      setMessageType('error');
+    }
+  };
+
+  // Удаление группы
+  const handleDeleteGroup = async (id) => {
+    if (!window.confirm('Удалить группу?')) return;
+    try {
+      await deleteDoc(doc(db, 'groups', id));
+      setMessage('Группа удалена!');
+      setMessageType('success');
+      setUserGroups(userGroups.filter(g => g.id !== id));
+    } catch (e) {
+      setMessage('Ошибка при удалении группы.');
       setMessageType('error');
     }
   };
@@ -101,6 +136,22 @@ function RegisterGroup({ user }) {
               Зарегистрировать группу
             </button>
           </form>
+
+          {userGroups.length > 0 && (
+            <div className="user-groups-list">
+              <h4>Ваши группы:</h4>
+              <ul>
+                {userGroups.map(g => (
+                  <li key={g.id} className="user-group-item">
+                    <span>{g.title} ({g.id})</span>
+                    <button className="delete-group-btn" onClick={() => handleDeleteGroup(g.id)}>
+                      Удалить
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {message && (
             <div className={`message ${messageType}`}>
