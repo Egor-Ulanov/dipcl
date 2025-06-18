@@ -173,13 +173,21 @@ function Stats({ user }) {
       const stats = violatorsMap.get(authorId);
       stats.totalMessages++;
 
-      // Используем violations из check
-      const violations = check.violations || [];
-      if (violations.includes("Токсичность")) {
-        stats.toxicMessages++;
-      }
-      if (violations.includes("Спам")) {
-        stats.spamMessages++;
+      // Новый формат: если есть sentences, считаем по предложениям
+      if (Array.isArray(check.sentences)) {
+        let hasToxic = false;
+        let hasSpam = false;
+        check.sentences.forEach(sent => {
+          if (sent.violations && sent.violations.includes("Токсичность")) hasToxic = true;
+          if (sent.violations && sent.violations.includes("Спам")) hasSpam = true;
+        });
+        if (hasToxic) stats.toxicMessages++;
+        if (hasSpam) stats.spamMessages++;
+      } else {
+        // Старый формат
+        const violations = check.violations || [];
+        if (violations.includes("Токсичность")) stats.toxicMessages++;
+        if (violations.includes("Спам")) stats.spamMessages++;
       }
 
       stats.violationRate = ((stats.toxicMessages + stats.spamMessages) / stats.totalMessages) * 100;
@@ -747,32 +755,42 @@ function Stats({ user }) {
           <h3>Топ нарушителей</h3>
           {violators.length > 0 ? (
             <div className="violators-list">
-              {violators.map((violator, index) => (
-                <div key={violator.author} className="violator-item">
-                  <div className="violator-header">
-                    <span className="violator-rank">#{index + 1}</span>
-                    <span className="violator-name">{violator.author.split('__')[0]}</span>
+              {violators.map((violator, index) => {
+                // Показываем Telegram ID в скобках, если есть
+                let name = violator.author;
+                let id = '';
+                if (name.includes('__')) {
+                  const parts = name.split('__');
+                  name = parts[0];
+                  id = parts[1];
+                }
+                return (
+                  <div key={violator.author} className="violator-item">
+                    <div className="violator-header">
+                      <span className="violator-rank">#{index + 1}</span>
+                      <span className="violator-name">{name}{id ? ` (${id})` : ''}</span>
+                    </div>
+                    <div className="violator-stats">
+                      <div className="stat-item">
+                        <span className="stat-label">Всего сообщений:</span>
+                        <span className="stat-value">{violator.totalMessages}</span>
+                      </div>
+                      <div className="stat-item">
+                        <span className="stat-label">Токсичных:</span>
+                        <span className="stat-value">{violator.toxicMessages}</span>
+                      </div>
+                      <div className="stat-item">
+                        <span className="stat-label">Спам:</span>
+                        <span className="stat-value">{violator.spamMessages}</span>
+                      </div>
+                      <div className="stat-item">
+                        <span className="stat-label">Процент нарушений:</span>
+                        <span className="stat-value">{violator.violationRate.toFixed(1)}%</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="violator-stats">
-                    <div className="stat-item">
-                      <span className="stat-label">Всего сообщений:</span>
-                      <span className="stat-value">{violator.totalMessages}</span>
-                    </div>
-                    <div className="stat-item">
-                      <span className="stat-label">Токсичных:</span>
-                      <span className="stat-value">{violator.toxicMessages}</span>
-                    </div>
-                    <div className="stat-item">
-                      <span className="stat-label">Спам:</span>
-                      <span className="stat-value">{violator.spamMessages}</span>
-                    </div>
-                    <div className="stat-item">
-                      <span className="stat-label">Процент нарушений:</span>
-                      <span className="stat-value">{violator.violationRate.toFixed(1)}%</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <p>Нет данных о нарушениях</p>
@@ -797,6 +815,7 @@ function Stats({ user }) {
                   {check.is_safe ? 'Запрещенного контента не обнаружено' : 'Обнаружены нарушения'}
                 </p>
                 <p className="check-text"><strong>Текст:</strong> {check.text}</p>
+                <p className="check-author"><strong>Автор:</strong> {check.author}</p>
                 {check.sentences ? (
                   <ul className="sentences-list">
                     {check.sentences.map((sent, idx) => (
@@ -810,7 +829,6 @@ function Stats({ user }) {
                   </ul>
                 ) : (
                   <>
-                    <p className="check-author"><strong>Автор:</strong> {check.author}</p>
                     {check.violations && check.violations.length > 0 && (
                       <p className="check-violations">
                         <strong>Нарушения:</strong> {check.violations.join(', ')}
