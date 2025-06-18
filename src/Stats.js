@@ -461,31 +461,31 @@ function Stats({ user }) {
             };
           }
 
-          // Если есть sentences — разворачиваем каждое предложение как отдельную проверку
+          // Новый формат: sentences — одна проверка = один блок
           if (Array.isArray(check.sentences)) {
-            check.sentences.forEach(sent => {
-              const is_safe = sent.is_safe;
-              const is_review = sent.is_review === true;
-              const checkData = {
-                id: doc.id + '_' + sent.text,
-                date: checkDate,
-                text: sent.text,
-                author: check.author || 'Неизвестен',
-                is_safe: is_safe,
-                sentiment: sent.sentiment,
-                violations: sent.violations || [],
-                is_review: is_review,
-              };
-              // Статистика для графика
-              const is_toxic = sent.violations && sent.violations.includes("Токсичность");
-              if (is_toxic) {
-                dates[dateStr].toxic++;
-              } else {
-                dates[dateStr].safe++;
-              }
-              dates[dateStr].checks.push(checkData);
-              data.push(checkData);
-            });
+            // Определяем, есть ли нарушения хотя бы в одном предложении
+            const hasViolation = check.sentences.some(sent => sent.violations && sent.violations.length > 0);
+            const is_safe = !hasViolation;
+            // Для графика: одна проверка = один столбец
+            if (hasViolation) {
+              dates[dateStr].toxic++;
+            } else {
+              dates[dateStr].safe++;
+            }
+            // Для отзывов: если хотя бы одно предложение is_review
+            const is_review = check.sentences.some(sent => sent.is_review === true);
+            // Для списка: сохраняем массив предложений
+            const checkData = {
+              id: doc.id,
+              date: checkDate,
+              text: check.text || check.sentences.map(s => s.text).join(' '),
+              author: check.author || 'Неизвестен',
+              is_safe: is_safe,
+              sentences: check.sentences,
+              is_review: is_review,
+            };
+            dates[dateStr].checks.push(checkData);
+            data.push(checkData);
           } else {
             // Старый формат
             const violations = (check.result && check.result.violations) ? check.result.violations : (check.violations || []);
@@ -497,7 +497,6 @@ function Stats({ user }) {
               text: check.text || 'Сообщение',
               author: check.author || 'Неизвестен',
               is_safe: is_safe,
-              sentiment: check.sentiment,
               violations: violations,
               is_review: is_review,
             };
@@ -526,16 +525,21 @@ function Stats({ user }) {
         const reviewByDate = {};
         reviewChecks.forEach(item => {
           const d = item.date.toLocaleDateString();
-          if (!reviewByDate[d]) {
-            if (item.sentiment === "positive") {
-              reviewByDate[d] = { positive: 1, negative: 0 };
-            } else if (item.sentiment === "negative") {
-              reviewByDate[d] = { positive: 0, negative: 1 };
+          // Для новых: если есть предложения, считаем положительный/отрицательный по большинству
+          if (item.sentences) {
+            const pos = item.sentences.filter(s => s.sentiment === "positive").length;
+            const neg = item.sentences.filter(s => s.sentiment === "negative").length;
+            if (!reviewByDate[d]) {
+              reviewByDate[d] = { positive: 0, negative: 0 };
             }
+            if (pos > neg) reviewByDate[d].positive++;
+            else if (neg > pos) reviewByDate[d].negative++;
           } else {
-            if (item.sentiment === "positive") {
-              reviewByDate[d] = { positive: 1, negative: 0 };
+            if (!reviewByDate[d]) {
+              reviewByDate[d] = { positive: 0, negative: 0 };
             }
+            if (item.sentiment === "positive") reviewByDate[d].positive++;
+            else if (item.sentiment === "negative") reviewByDate[d].negative++;
           }
         });
         const reviewLabels = Object.keys(reviewByDate);
@@ -772,18 +776,32 @@ function Stats({ user }) {
               <li key={check.id} className={`check-item ${check.is_safe ? 'safe' : 'toxic'}`}>
                 <div className="check-header">
                   <span className="check-date">{check.date.toLocaleDateString()}</span>
-                  {check.master && <span className="check-master">Мастер: {check.master}</span>}
                 </div>
-                <p className="check-text"><strong>Текст:</strong> {check.text}</p>
-                <p className="check-author"><strong>Автор:</strong> {check.author}</p>
                 <p className="check-status">
                   <strong>Результат:</strong>{' '}
                   {check.is_safe ? 'Запрещенного контента не обнаружено' : 'Обнаружены нарушения'}
                 </p>
-                {check.violations && check.violations.length > 0 && (
-                  <p className="check-violations">
-                    <strong>Нарушения:</strong> {check.violations.join(', ')}
-                  </p>
+                <p className="check-text"><strong>Текст:</strong> {check.text}</p>
+                {check.sentences ? (
+                  <ul className="sentences-list">
+                    {check.sentences.map((sent, idx) => (
+                      <li key={idx} className={sent.violations && sent.violations.length > 0 ? 'sentence-violation' : ''}>
+                        {sent.text}
+                        {sent.violations && sent.violations.length > 0 && (
+                          <span className="sentence-violations"> — {sent.violations.join(', ')}</span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <>
+                    <p className="check-author"><strong>Автор:</strong> {check.author}</p>
+                    {check.violations && check.violations.length > 0 && (
+                      <p className="check-violations">
+                        <strong>Нарушения:</strong> {check.violations.join(', ')}
+                      </p>
+                    )}
+                  </>
                 )}
               </li>
             ))}

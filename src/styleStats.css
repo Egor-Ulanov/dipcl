@@ -313,3 +313,12 @@
     height: 400px;
   }
 }
+
+.sentence-violation {
+  color: #c00;
+  font-weight: bold;
+}
+.sentence-violations {
+  margin-left: 8px;
+  font-size: 0.95em;
+}
