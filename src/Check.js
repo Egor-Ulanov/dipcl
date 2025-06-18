@@ -174,9 +174,17 @@ function Check({ user }) {
           {result && (
             <div className="results-section">
               <h2>Результаты проверки</h2>
-              {/* Если есть массив предложений */}
               {Array.isArray(result.sentences) ? (
                 <div>
+                  {/* Общий статус */}
+                  <div className={`result-card ${result.sentences.some(s => !s.is_safe) ? 'toxic' : 'safe'}`}> 
+                    <div className="result-status">
+                      Статус: <span>
+                        {result.sentences.some(s => !s.is_safe) ? "Обнаружены нарушения" : "Безопасно"}
+                      </span>
+                    </div>
+                  </div>
+                  {/* Список предложений */}
                   {result.sentences.map((sent, idx) => (
                     <div key={idx} className={`result-card ${sent.is_safe ? 'safe' : 'toxic'}`} style={{marginBottom: '12px'}}>
                       <div className="result-details">
