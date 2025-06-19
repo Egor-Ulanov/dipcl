@@ -15,6 +15,7 @@ import { Bar, Line, Pie, Doughnut } from 'react-chartjs-2';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from './firebaseConfig';
 import './styleStats.css';
+import { BarChart, XAxis, YAxis, ResponsiveContainer } from 'recharts';
 
 // Регистрация необходимых компонентов для графиков
 ChartJS.register(
@@ -770,70 +771,30 @@ function Stats({ user }) {
   const sortedHistory = [...history].sort((a, b) => new Date(b.date) - new Date(a.date));
 
   // Перед return (
-  // --- График токсичности ---
+  // --- Подготовка данных для графиков ---
   const sortedLabels = chartData?.labels || [];
   const safeCount = chartData?.datasets?.[0]?.data || [];
   const unsafeCount = chartData?.datasets?.[1]?.data || [];
-  const toxicityData = chartData || { labels: [], datasets: [] };
-  const toxicityOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { position: 'top' },
-      tooltip: {
-        callbacks: {
-          title: (tooltipItems) => {
-            const date = new Date(tooltipItems[0].label);
-            return date.toLocaleDateString('ru-RU');
-          }
-        }
-      }
-    },
-    scales: {
-      x: {
-        ticks: {
-          callback: function(value, index, ticks) {
-            const date = new Date(this.getLabelForValue(value));
-            return date.toLocaleDateString('ru-RU');
-          }
-        }
-      },
-      y: { beginAtZero: true }
-    }
-  };
-  // --- График отзывов ---
-  const reviewData = reviewChartData || { labels: [], datasets: [] };
-  const reviewOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { position: 'top' },
-      tooltip: {
-        callbacks: {
-          title: (tooltipItems) => {
-            const date = new Date(tooltipItems[0].label);
-            return date.toLocaleDateString('ru-RU');
-          }
-        }
-      }
-    },
-    scales: {
-      x: {
-        ticks: {
-          callback: function(value, index, ticks) {
-            const date = new Date(this.getLabelForValue(value));
-            return date.toLocaleDateString('ru-RU');
-          }
-        }
-      },
-      y: { beginAtZero: true }
-    }
+  const toxicityChartData = sortedLabels.map((date, i) => ({
+    date,
+    safe: safeCount[i] || 0,
+    toxic: unsafeCount[i] || 0,
+  }));
+  const reviewLabels = reviewChartData?.labels || [];
+  const reviewPositive = reviewChartData?.datasets?.[0]?.data || [];
+  const reviewNegative = reviewChartData?.datasets?.[1]?.data || [];
+  const reviewChartDataArr = reviewLabels.map((date, i) => ({
+    date,
+    positive: reviewPositive[i] || 0,
+    negative: reviewNegative[i] || 0,
+  }));
+  const formatDate = (iso) => {
+    const d = new Date(iso);
+    return d.toLocaleDateString('ru-RU');
   };
   // ... existing code ...
   // В рендере:
-  // <Bar data={chartData} ... /> -> <Bar data={toxicityData} options={toxicityOptions} ... />
-  // <Bar data={reviewChartData} ... /> -> <Bar data={reviewData} options={reviewOptions} ... />
-  // ... existing code ...
+  // Вместо ChartComponent и Bar используем Recharts:
 
   return (
     <div className="stats-container">
@@ -914,20 +875,34 @@ function Stats({ user }) {
 
       <div className="stats-content">
         <div className="charts-container">
-          <div className="chart-section">
-            <h3>Токсичность сообщений</h3>
-            {chartData && <ChartComponent
-              data={toxicityData}
-              options={toxicityOptions}
-            />}
-          </div>
+          <div>
+            <div className="chart-section">
+              <h3>Токсичность сообщений</h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={toxicityChartData}>
+                  <XAxis dataKey="date" tickFormatter={formatDate} />
+                  <YAxis />
+                  <Tooltip labelFormatter={formatDate} />
+                  <Legend />
+                  <Bar dataKey="safe" name="Безопасные" fill="#4dd0e1" />
+                  <Bar dataKey="toxic" name="Токсичные" fill="#f06292" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
 
-          <div className="chart-section">
-            <h3>Отзывы</h3>
-            {reviewChartData && <ChartComponent
-              data={reviewData}
-              options={reviewOptions}
-            />}
+            <div className="chart-section">
+              <h3>Отзывы</h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={reviewChartDataArr}>
+                  <XAxis dataKey="date" tickFormatter={formatDate} />
+                  <YAxis />
+                  <Tooltip labelFormatter={formatDate} />
+                  <Legend />
+                  <Bar dataKey="positive" name="Положительные" fill="#4dd0e1" />
+                  <Bar dataKey="negative" name="Отрицательные" fill="#f06292" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
 
