@@ -433,8 +433,8 @@ function Stats({ user }) {
           const d = new Date(date);
           return d.toLocaleDateString('ru-RU');
         });
-        const reviewPositiveArr = formattedReviewLabels.map(d => reviewByDate[d].positive);
-        const reviewNegativeArr = formattedReviewLabels.map(d => reviewByDate[d].negative);
+        const reviewPositiveArr = formattedReviewLabels.map(d => (reviewByDate[d]?.positive || 0));
+        const reviewNegativeArr = formattedReviewLabels.map(d => (reviewByDate[d]?.negative || 0));
         const reviewPositiveCount = reviewPositiveArr.reduce((a, b) => a + b, 0);
         const reviewNegativeCount = reviewNegativeArr.reduce((a, b) => a + b, 0);
         const reviewData = chartType === 'pie' || chartType === 'doughnut'
@@ -599,8 +599,8 @@ function Stats({ user }) {
           const d = new Date(date);
           return d.toLocaleDateString('ru-RU');
         });
-        const reviewPositiveArr = formattedReviewLabels.map(d => reviewByDate[d].positive);
-        const reviewNegativeArr = formattedReviewLabels.map(d => reviewByDate[d].negative);
+        const reviewPositiveArr = formattedReviewLabels.map(d => (reviewByDate[d]?.positive || 0));
+        const reviewNegativeArr = formattedReviewLabels.map(d => (reviewByDate[d]?.negative || 0));
         const reviewPositiveCount = reviewPositiveArr.reduce((a, b) => a + b, 0);
         const reviewNegativeCount = reviewNegativeArr.reduce((a, b) => a + b, 0);
         const reviewData = chartType === 'pie' || chartType === 'doughnut'
