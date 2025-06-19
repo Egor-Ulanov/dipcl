@@ -48,166 +48,6 @@ function Stats({ user }) {
   const [selectedGroupId, setSelectedGroupId] = useState('all'); // выбранная группа
   const [groupList, setGroupList] = useState([]); // список групп
 
-  // Фильтрация данных по выбранному временному периоду
-  const filterDataByPeriod = (data, dates) => {
-    if (periodType === 'all') {
-      return { dates, data };
-    }
-
-    const now = new Date();
-    let startDate;
-    
-    switch (periodType) {
-      case 'day':
-        startDate = new Date(now);
-        startDate.setDate(now.getDate() - 1);
-        break;
-      case 'week':
-        startDate = new Date(now);
-        startDate.setDate(now.getDate() - 7);
-        break;
-      case 'month':
-        startDate = new Date(now);
-        startDate.setMonth(now.getMonth() - 1);
-        break;
-      case 'custom':
-        startDate = new Date(customStartDate);
-        now.setTime(customEndDate.getTime());
-        break;
-      default:
-        return { dates, data };
-    }
-
-    // Устанавливаем время для корректного сравнения
-    startDate.setHours(0, 0, 0, 0);
-    const endDate = new Date(now);
-    endDate.setHours(23, 59, 59, 999);
-
-    console.log('Фильтрация по периоду:', {
-      startDate: startDate.toISOString(),
-      endDate: endDate.toISOString()
-    });
-
-    const filteredDates = {};
-    const filteredData = data.filter(item => {
-      const itemDate = new Date(item.date);
-      
-      console.log('Проверка записи:', {
-        itemDate: itemDate.toISOString(),
-        isInRange: itemDate >= startDate && itemDate <= endDate
-      });
-
-      if (itemDate >= startDate && itemDate <= endDate) {
-        const dateStr = itemDate.toISOString().split('T')[0];
-        if (!filteredDates[dateStr]) {
-          filteredDates[dateStr] = { safe: 0, toxic: 0 };
-        }
-        const is_toxic = item.sentences
-          ? item.sentences.some(sent => sent.violations && sent.violations.includes("Токсичность"))
-          : item.violations && item.violations.includes("Токсичность");
-        if (is_toxic) {
-          filteredDates[dateStr].toxic++;
-        } else {
-          filteredDates[dateStr].safe++;
-        }
-        return true;
-      }
-      return false;
-    });
-
-    return { dates: filteredDates, data: filteredData };
-  };
-
-  // Фильтрация данных по выбранному мастеру
-  const filterDataByMaster = (data, dates) => {
-    if (selectedMaster === 'all') {
-      return { dates, data };
-    }
-
-    const filteredDates = {};
-    const filteredData = data.filter(item => {
-      if (selectedMaster === 'no-master' && !item.master) {
-        const dateStr = item.date.toISOString().split('T')[0];
-        if (!filteredDates[dateStr]) {
-          filteredDates[dateStr] = { safe: 0, toxic: 0 };
-        }
-        const is_toxic = item.violations && item.violations.includes("Токсичность");
-        if (is_toxic) {
-          filteredDates[dateStr].toxic++;
-        } else {
-          filteredDates[dateStr].safe++;
-        }
-        return true;
-      }
-      if (item.master === selectedMaster) {
-        const dateStr = item.date.toISOString().split('T')[0];
-        if (!filteredDates[dateStr]) {
-          filteredDates[dateStr] = { safe: 0, toxic: 0 };
-        }
-        const is_toxic = item.violations && item.violations.includes("Токсичность");
-        if (is_toxic) {
-          filteredDates[dateStr].toxic++;
-        } else {
-          filteredDates[dateStr].safe++;
-        }
-        return true;
-      }
-      return false;
-    });
-
-    return { dates: filteredDates, data: filteredData };
-  };
-
-  // Расчет статистики нарушителей и формирование топ-10
-  const calculateViolators = (data) => {
-    const violatorsMap = new Map();
-
-    data.forEach(check => {
-      const authorId = check.author || 'unknown';
-      if (!violatorsMap.has(authorId)) {
-        violatorsMap.set(authorId, {
-          author: authorId,
-          totalMessages: 0,
-          toxicMessages: 0,
-          spamMessages: 0,
-          violationChecks: 0, // Количество проверок с хотя бы одним нарушением
-          violationRate: 0
-        });
-      }
-
-      const stats = violatorsMap.get(authorId);
-      stats.totalMessages++;
-
-      let hasToxic = false;
-      let hasSpam = false;
-      let hasAnyViolation = false;
-      // Новый формат: если есть sentences, считаем по предложениям
-      if (Array.isArray(check.sentences)) {
-        check.sentences.forEach(sent => {
-          if (sent.violations && sent.violations.includes("Токсичность")) hasToxic = true;
-          if (sent.violations && sent.violations.includes("Спам")) hasSpam = true;
-        });
-        hasAnyViolation = hasToxic || hasSpam;
-        if (hasToxic) stats.toxicMessages++;
-        if (hasSpam) stats.spamMessages++;
-      } else {
-        // Старый формат
-        const violations = check.violations || [];
-        if (violations.includes("Токсичность")) hasToxic = true;
-        if (violations.includes("Спам")) hasSpam = true;
-        hasAnyViolation = hasToxic || hasSpam;
-        if (hasToxic) stats.toxicMessages++;
-        if (hasSpam) stats.spamMessages++;
-      }
-      if (hasAnyViolation) stats.violationChecks++;
-      stats.violationRate = (stats.violationChecks / stats.totalMessages) * 100;
-    });
-
-    return Array.from(violatorsMap.values())
-      .sort((a, b) => b.violationRate - a.violationRate)
-      .slice(0, 10);
-  };
-
   // Подготовка данных для графика токсичности сообщений
   const prepareChartData = (labels, safeCount, unsafeCount) => {
     return {
@@ -390,21 +230,75 @@ function Stats({ user }) {
         setGroupList(groupArr);
         setMasters(Array.from(uniqueMasters));
 
-        let filtered = filterDataByPeriod(allChecks, dates);
-        filtered = filterDataByMaster(filtered.data, filtered.dates);
-        setHistory(filtered.data);
-
-        const violatorsStats = calculateViolators(filtered.data);
-        setViolators(violatorsStats);
-
-        const labels = Object.keys(filtered.dates).sort();
-        const safeCount = labels.map(date => filtered.dates[date].safe || 0);
-        const unsafeCount = labels.map(date => filtered.dates[date].toxic || 0);
-
+        let startDate, endDate;
+        const now = new Date();
+        if (periodType === 'all') {
+          startDate = new Date(-8640000000000000); // минимальная дата
+          endDate = new Date(8640000000000000); // максимальная дата
+        } else {
+          endDate = new Date(now);
+          endDate.setHours(23, 59, 59, 999);
+          switch (periodType) {
+            case 'day':
+              startDate = new Date(now);
+              startDate.setHours(0, 0, 0, 0);
+              break;
+            case 'week':
+              startDate = new Date(now);
+              startDate.setDate(now.getDate() - 6);
+              startDate.setHours(0, 0, 0, 0);
+              break;
+            case 'month':
+              startDate = new Date(now);
+              startDate.setMonth(now.getMonth() - 1);
+              startDate.setHours(0, 0, 0, 0);
+              break;
+            case 'custom':
+              startDate = new Date(customStartDate);
+              startDate.setHours(0, 0, 0, 0);
+              endDate = new Date(customEndDate);
+              endDate.setHours(23, 59, 59, 999);
+              break;
+            default:
+              startDate = new Date(-8640000000000000);
+              endDate = new Date(8640000000000000);
+          }
+        }
+        // 2. Фильтруем проверки по периоду
+        const filteredChecks = allChecks.filter(item => {
+          const d = new Date(item.date);
+          return d >= startDate && d <= endDate;
+        });
+        // 3. Группируем по датам (UTC, ISO)
+        const dates = {};
+        filteredChecks.forEach(item => {
+          const d = new Date(item.date);
+          const dateStr = d.toISOString().split('T')[0];
+          if (!dates[dateStr]) {
+            dates[dateStr] = { safe: 0, toxic: 0, checks: [] };
+          }
+          if (Array.isArray(item.sentences)) {
+            const hasToxic = item.sentences.some(sent => sent.violations && sent.violations.includes("Токсичность"));
+            if (hasToxic) dates[dateStr].toxic++;
+            else dates[dateStr].safe++;
+          } else {
+            const is_toxic = item.violations && item.violations.includes("Токсичность");
+            if (is_toxic) dates[dateStr].toxic++;
+            else dates[dateStr].safe++;
+          }
+          dates[dateStr].checks.push(item);
+        });
+        // 4. Историю сортируем по дате по убыванию
+        const sortedHistory = [...filteredChecks].sort((a, b) => new Date(b.date) - new Date(a.date));
+        setHistory(sortedHistory);
+        // 5. График
+        const labels = Object.keys(dates).sort();
+        const safeCount = labels.map(date => dates[date].safe || 0);
+        const unsafeCount = labels.map(date => dates[date].toxic || 0);
         setChartData(prepareChartData(labels, safeCount, unsafeCount));
         
         // График отзывов только по is_review/review === true
-        const reviewChecks = filtered.data.filter(item => item.is_review === true);
+        const reviewChecks = filteredChecks.filter(item => item.is_review === true);
         const reviewByDate = {};
         reviewChecks.forEach(item => {
           const d = item.date.toLocaleDateString();
