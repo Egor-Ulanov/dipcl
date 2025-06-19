@@ -399,7 +399,13 @@ function Stats({ user }) {
         const safeCount = labels.map(date => filtered.dates[date].safe || 0);
         const unsafeCount = labels.map(date => filtered.dates[date].toxic || 0);
 
-        setChartData(prepareChartData(labels, safeCount, unsafeCount));
+        const sortedLabels = Object.keys(filtered.dates).sort((a, b) => new Date(a) - new Date(b));
+        const formattedLabels = sortedLabels.map(date => {
+          const d = new Date(date);
+          return d.toLocaleDateString('ru-RU');
+        });
+
+        setChartData(prepareChartData(formattedLabels, safeCount, unsafeCount));
 
         // График отзывов только по is_review/review === true
         const reviewChecks = filtered.data.filter(item => item.is_review === true);
@@ -422,9 +428,13 @@ function Stats({ user }) {
             else if (item.sentiment === "negative") reviewByDate[d].negative++;
           }
         });
-        const reviewLabels = Object.keys(reviewByDate);
-        const reviewPositiveArr = reviewLabels.map(d => reviewByDate[d].positive);
-        const reviewNegativeArr = reviewLabels.map(d => reviewByDate[d].negative);
+        const sortedReviewLabels = Object.keys(reviewByDate).sort((a, b) => new Date(a) - new Date(b));
+        const formattedReviewLabels = sortedReviewLabels.map(date => {
+          const d = new Date(date);
+          return d.toLocaleDateString('ru-RU');
+        });
+        const reviewPositiveArr = formattedReviewLabels.map(d => reviewByDate[d].positive);
+        const reviewNegativeArr = formattedReviewLabels.map(d => reviewByDate[d].negative);
         const reviewPositiveCount = reviewPositiveArr.reduce((a, b) => a + b, 0);
         const reviewNegativeCount = reviewNegativeArr.reduce((a, b) => a + b, 0);
         const reviewData = chartType === 'pie' || chartType === 'doughnut'
@@ -444,7 +454,7 @@ function Stats({ user }) {
               }],
             }
           : {
-              labels: reviewLabels,
+              labels: formattedReviewLabels,
               datasets: [
                 {
                   label: 'Положительные',
@@ -554,7 +564,13 @@ function Stats({ user }) {
         const safeCount = labels.map(date => filtered.dates[date].safe || 0);
         const unsafeCount = labels.map(date => filtered.dates[date].toxic || 0);
 
-        setChartData(prepareChartData(labels, safeCount, unsafeCount));
+        const sortedLabels = Object.keys(filtered.dates).sort((a, b) => new Date(a) - new Date(b));
+        const formattedLabels = sortedLabels.map(date => {
+          const d = new Date(date);
+          return d.toLocaleDateString('ru-RU');
+        });
+
+        setChartData(prepareChartData(formattedLabels, safeCount, unsafeCount));
 
         // График отзывов только по is_review === true, группировка по дате
         const reviewChecks = filtered.data.filter(item => item.is_review === true);
@@ -578,9 +594,13 @@ function Stats({ user }) {
             else if (item.sentiment === "negative") reviewByDate[d].negative++;
           }
         });
-        const reviewLabels = Object.keys(reviewByDate);
-        const reviewPositiveArr = reviewLabels.map(d => reviewByDate[d].positive);
-        const reviewNegativeArr = reviewLabels.map(d => reviewByDate[d].negative);
+        const sortedReviewLabels = Object.keys(reviewByDate).sort((a, b) => new Date(a) - new Date(b));
+        const formattedReviewLabels = sortedReviewLabels.map(date => {
+          const d = new Date(date);
+          return d.toLocaleDateString('ru-RU');
+        });
+        const reviewPositiveArr = formattedReviewLabels.map(d => reviewByDate[d].positive);
+        const reviewNegativeArr = formattedReviewLabels.map(d => reviewByDate[d].negative);
         const reviewPositiveCount = reviewPositiveArr.reduce((a, b) => a + b, 0);
         const reviewNegativeCount = reviewNegativeArr.reduce((a, b) => a + b, 0);
         const reviewData = chartType === 'pie' || chartType === 'doughnut'
@@ -600,7 +620,7 @@ function Stats({ user }) {
               }],
             }
           : {
-              labels: reviewLabels,
+              labels: formattedReviewLabels,
               datasets: [
                 {
                   label: 'Положительные',
