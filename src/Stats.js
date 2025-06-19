@@ -140,7 +140,7 @@ function Stats({ user }) {
         const groupDocs = await getDocs(query(groupsRef, where('info.admin_email', '==', user.email)));
         
         const groupArr = [];
-        const dates = {};
+        let dates = {};
         const uniqueMasters = new Set(['all', 'no-master']);
         const allChecks = [];
 
@@ -270,7 +270,7 @@ function Stats({ user }) {
           return d >= startDate && d <= endDate;
         });
         // 3. Группируем по датам (UTC, ISO)
-        const dates = {};
+        dates = {};
         filteredChecks.forEach(item => {
           const d = new Date(item.date);
           const dateStr = d.toISOString().split('T')[0];
