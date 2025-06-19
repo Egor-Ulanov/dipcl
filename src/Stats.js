@@ -772,24 +772,26 @@ function Stats({ user }) {
 
   // Перед return (
   // --- Подготовка данных для графиков ---
-  const sortedLabels = chartData?.labels || [];
+  const sortedLabels = chartData?.labels?.filter(Boolean) || [];
   const safeCount = chartData?.datasets?.[0]?.data || [];
   const unsafeCount = chartData?.datasets?.[1]?.data || [];
   const toxicityChartData = sortedLabels.map((date, i) => ({
-    date,
+    date: date, // ISO-строка!
     safe: safeCount[i] || 0,
     toxic: unsafeCount[i] || 0,
-  }));
-  const reviewLabels = reviewChartData?.labels || [];
+  })).filter(d => d.date && d.date.length === 10 && d.date.includes('-'));
+  const reviewLabels = reviewChartData?.labels?.filter(Boolean) || [];
   const reviewPositive = reviewChartData?.datasets?.[0]?.data || [];
   const reviewNegative = reviewChartData?.datasets?.[1]?.data || [];
   const reviewChartDataArr = reviewLabels.map((date, i) => ({
-    date,
+    date: date, // ISO-строка!
     positive: reviewPositive[i] || 0,
     negative: reviewNegative[i] || 0,
-  }));
+  })).filter(d => d.date && d.date.length === 10 && d.date.includes('-'));
   const formatDate = (iso) => {
+    if (!iso) return '';
     const d = new Date(iso);
+    if (isNaN(d.getTime())) return iso;
     return d.toLocaleDateString('ru-RU');
   };
   // ... existing code ...
