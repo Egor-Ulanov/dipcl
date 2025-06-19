@@ -16,6 +16,10 @@ import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from './firebaseConfig';
 import './styleStats.css';
 import { BarChart, XAxis, YAxis, ResponsiveContainer } from 'recharts';
+import ToxicityChart from './components/ToxicityChart';
+import ReviewChart from './components/ReviewChart';
+import TopViolators from './components/TopViolators';
+import CheckHistory from './components/CheckHistory';
 
 // Регистрация необходимых компонентов для графиков
 ChartJS.register(
@@ -770,234 +774,38 @@ function Stats({ user }) {
 
   const sortedHistory = [...history].sort((a, b) => new Date(b.date) - new Date(a.date));
 
-  // Перед return (
-  // --- Подготовка данных для графиков ---
-  const sortedLabels = chartData?.labels?.filter(Boolean) || [];
-  const safeCount = chartData?.datasets?.[0]?.data || [];
-  const unsafeCount = chartData?.datasets?.[1]?.data || [];
-  const toxicityChartData = sortedLabels.map((date, i) => ({
-    date: date, // ISO-строка!
-    safe: safeCount[i] || 0,
-    toxic: unsafeCount[i] || 0,
+  // Подготовка данных для новых компонентов
+  const toxicityChartData = (chartData?.labels || []).map((date, i) => ({
+    date: date, // ISO-строка
+    safe: chartData?.datasets?.[0]?.data?.[i] || 0,
+    toxic: chartData?.datasets?.[1]?.data?.[i] || 0,
   })).filter(d => d.date && d.date.length === 10 && d.date.includes('-'));
-  const reviewLabels = reviewChartData?.labels?.filter(Boolean) || [];
-  const reviewPositive = reviewChartData?.datasets?.[0]?.data || [];
-  const reviewNegative = reviewChartData?.datasets?.[1]?.data || [];
-  const reviewChartDataArr = reviewLabels.map((date, i) => ({
-    date: date, // ISO-строка!
-    positive: reviewPositive[i] || 0,
-    negative: reviewNegative[i] || 0,
+
+  const reviewChartDataArr = (reviewChartData?.labels || []).map((date, i) => ({
+    date: date, // ISO-строка
+    positive: reviewChartData?.datasets?.[0]?.data?.[i] || 0,
+    neutral: reviewChartData?.datasets?.[1]?.data?.[i] || 0,
+    negative: reviewChartData?.datasets?.[2]?.data?.[i] || 0,
   })).filter(d => d.date && d.date.length === 10 && d.date.includes('-'));
-  const formatDate = (iso) => {
-    if (!iso) return '';
-    const d = new Date(iso);
-    if (isNaN(d.getTime())) return iso;
-    return d.toLocaleDateString('ru-RU');
-  };
-  // ... existing code ...
-  // В рендере:
-  // Вместо ChartComponent и Bar используем Recharts:
+
+  const topViolators = (violators || []).map(v => ({
+    name: v.author,
+    count: v.violationChecks || v.violationRate || 0
+  }));
+
+  const checkHistoryData = (history || []).sort((a, b) => new Date(b.date) - new Date(a.date)).map(item => ({
+    date: item.date instanceof Date ? item.date.toISOString() : item.date,
+    user: item.author || item.user || '',
+    text: item.text || '',
+    result: item.is_safe !== undefined ? (item.is_safe ? 'Без нарушений' : 'Есть нарушения') : (item.result || '')
+  }));
 
   return (
-    <div className="stats-container">
-      <h2 className="chart-title">Статистика проверок</h2>
-      <div className="controls">
-        <select className="stats-select" value={source} onChange={(e) => setSource(e.target.value)}>
-          <option value="telegram">Telegram-группы</option>
-          <option value="personal">Личные проверки</option>
-        </select>
-        {source === 'telegram' && groupList.length > 1 && (
-          <select
-            className="group-select"
-            value={selectedGroupId}
-            onChange={e => setSelectedGroupId(e.target.value)}
-          >
-            <option value="all">Все группы</option>
-            {groupList.map(g => (
-              <option key={g.id} value={g.id}>{g.title} ({g.id})</option>
-            ))}
-          </select>
-        )}
-        <select className="period-select" value={periodType} onChange={handlePeriodChange}>
-          <option value="all">Весь период</option>
-          <option value="day">Последний день</option>
-          <option value="week">Последняя неделя</option>
-          <option value="month">Последний месяц</option>
-          <option value="custom">Выбрать период</option>
-        </select>
-        <select 
-          className="master-select" 
-          value={selectedMaster} 
-          onChange={(e) => setSelectedMaster(e.target.value)}
-        >
-          <option value="all">Все мастера</option>
-          <option value="no-master">Без мастера</option>
-          {masters
-            .filter(master => master !== 'all' && master !== 'no-master')
-            .map(master => (
-              <option key={master} value={master}>{master}</option>
-            ))
-          }
-        </select>
-        <div className="chart-type-selector">
-          <label>Тип графика:</label>
-          <select 
-            value={chartType} 
-            onChange={(e) => setChartType(e.target.value)}
-            className="chart-type-select"
-          >
-            <option value="bar">Столбчатая диаграмма</option>
-            <option value="line">Линейный график</option>
-            <option value="pie">Круговая диаграмма</option>
-            <option value="doughnut">Кольцевая диаграмма</option>
-          </select>
-        </div>
-      </div>
-
-      {showCustomPeriod && (
-        <div className="custom-period">
-          <div className="date-picker">
-            <label>От:</label>
-            <input
-              type="date"
-              value={customStartDate.toISOString().split('T')[0]}
-              onChange={(e) => setCustomStartDate(new Date(e.target.value))}
-            />
-          </div>
-          <div className="date-picker">
-            <label>До:</label>
-            <input
-              type="date"
-              value={customEndDate.toISOString().split('T')[0]}
-              onChange={(e) => setCustomEndDate(new Date(e.target.value))}
-            />
-          </div>
-        </div>
-      )}
-
-      <div className="stats-content">
-        <div className="charts-container">
-          <div>
-            <div className="chart-section">
-              <h3>Токсичность сообщений</h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={toxicityChartData}>
-                  <XAxis dataKey="date" tickFormatter={formatDate} />
-                  <YAxis />
-                  <Tooltip labelFormatter={formatDate} />
-                  <Legend />
-                  <Bar dataKey="safe" name="Безопасные" fill="#4dd0e1" />
-                  <Bar dataKey="toxic" name="Токсичные" fill="#f06292" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-
-            <div className="chart-section">
-              <h3>Отзывы</h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={reviewChartDataArr}>
-                  <XAxis dataKey="date" tickFormatter={formatDate} />
-                  <YAxis />
-                  <Tooltip labelFormatter={formatDate} />
-                  <Legend />
-                  <Bar dataKey="positive" name="Положительные" fill="#4dd0e1" />
-                  <Bar dataKey="negative" name="Отрицательные" fill="#f06292" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        </div>
-
-        <div className="violators-section">
-          <h3>Топ нарушителей</h3>
-          {violators.length > 0 ? (
-            <div className="violators-list">
-              {violators.map((violator, index) => {
-                // Показываем Telegram ID в скобках, если есть
-                let name = violator.author;
-                let id = '';
-                if (name.includes('__')) {
-                  const parts = name.split('__');
-                  name = parts[0];
-                  id = parts[1];
-                }
-                return (
-                  <div key={violator.author} className="violator-item">
-                    <div className="violator-header">
-                      <span className="violator-rank">#{index + 1}</span>
-                      <span className="violator-name">{name}{id ? ` (${id})` : ''}</span>
-                    </div>
-                    <div className="violator-stats">
-                      <div className="stat-item">
-                        <span className="stat-label">Всего сообщений:</span>
-                        <span className="stat-value">{violator.totalMessages}</span>
-                      </div>
-                      <div className="stat-item">
-                        <span className="stat-label">Токсичных:</span>
-                        <span className="stat-value">{violator.toxicMessages}</span>
-                      </div>
-                      <div className="stat-item">
-                        <span className="stat-label">Спам:</span>
-                        <span className="stat-value">{violator.spamMessages}</span>
-                      </div>
-                      <div className="stat-item">
-                        <span className="stat-label">Процент нарушений:</span>
-                        <span className="stat-value">{violator.violationRate.toFixed(1)}%</span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <p>Нет данных о нарушениях</p>
-          )}
-        </div>
-      </div>
-
-      <div className="checks-history">
-        <h3>Список проверок за выбранный период</h3>
-        {sortedHistory.length === 0 ? (
-          <p>Нет проверок за выбранный период.</p>
-        ) : (
-          <ul>
-            {sortedHistory.map((check) => (
-              <li key={check.id} className={`check-item ${check.is_safe ? 'safe' : 'toxic'}`}>
-                <div className="check-header">
-                  <span className="check-date">{check.date.toLocaleDateString()}</span>
-                  {check.master && <span className="check-master">Мастер: {check.master}</span>}
-                </div>
-                <p className="check-status">
-                  <strong>Результат:</strong>{' '}
-                  {check.is_safe ? 'Запрещенного контента не обнаружено' : 'Обнаружены нарушения'}
-                </p>
-                <p className="check-text"><strong>Текст:</strong> {check.text}</p>
-                <p className="check-author"><strong>Автор:</strong> {check.author}</p>
-                {check.sentences ? (
-                  <ul className="sentences-list">
-                    {check.sentences.map((sent, idx) => (
-                      <li key={idx} className={sent.violations && sent.violations.length > 0 ? 'sentence-violation' : ''}>
-                        {sent.text}
-                        {sent.violations && sent.violations.length > 0 && (
-                          <span className="sentence-violations"> — {sent.violations.join(', ')}</span>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <>
-                    {check.violations && check.violations.length > 0 && (
-                      <p className="check-violations">
-                        <strong>Нарушения:</strong> {check.violations.join(', ')}
-                      </p>
-                    )}
-                  </>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+    <div className="stats-page">
+      <ToxicityChart data={toxicityChartData} />
+      <ReviewChart data={reviewChartDataArr} />
+      <TopViolators violators={topViolators} />
+      <CheckHistory history={checkHistoryData} />
     </div>
   );
 }
