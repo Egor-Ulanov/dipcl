@@ -411,7 +411,7 @@ function Stats({ user }) {
         const reviewChecks = filtered.data.filter(item => item.is_review === true);
         const reviewByDate = {};
         reviewChecks.forEach(item => {
-          const d = item.date.toLocaleDateString();
+          const d = item.date.toISOString().split('T')[0];
           if (item.sentences) {
             const pos = item.sentences.filter(s => s.sentiment === "positive").length;
             const neg = item.sentences.filter(s => s.sentiment === "negative").length;
@@ -429,12 +429,12 @@ function Stats({ user }) {
           }
         });
         const sortedReviewLabels = Object.keys(reviewByDate).sort((a, b) => new Date(a) - new Date(b));
-        const formattedReviewLabels = sortedReviewLabels.map(date => {
-          const d = new Date(date);
-          return d.toLocaleDateString('ru-RU');
+        const formattedReviewLabels = sortedReviewLabels.map(dateIso => {
+          const dateObj = new Date(dateIso);
+          return dateObj.toLocaleDateString('ru-RU');
         });
-        const reviewPositiveArr = formattedReviewLabels.map(d => (reviewByDate[d]?.positive || 0));
-        const reviewNegativeArr = formattedReviewLabels.map(d => (reviewByDate[d]?.negative || 0));
+        const reviewPositiveArr = sortedReviewLabels.map(d => (reviewByDate[d]?.positive || 0));
+        const reviewNegativeArr = sortedReviewLabels.map(d => (reviewByDate[d]?.negative || 0));
         const reviewPositiveCount = reviewPositiveArr.reduce((a, b) => a + b, 0);
         const reviewNegativeCount = reviewNegativeArr.reduce((a, b) => a + b, 0);
         const reviewData = chartType === 'pie' || chartType === 'doughnut'
@@ -576,7 +576,7 @@ function Stats({ user }) {
         const reviewChecks = filtered.data.filter(item => item.is_review === true);
         const reviewByDate = {};
         reviewChecks.forEach(item => {
-          const d = item.date.toLocaleDateString();
+          const d = item.date.toISOString().split('T')[0];
           // Для новых: если есть предложения, считаем положительный/отрицательный по большинству
           if (item.sentences) {
             const pos = item.sentences.filter(s => s.sentiment === "positive").length;
@@ -595,12 +595,12 @@ function Stats({ user }) {
           }
         });
         const sortedReviewLabels = Object.keys(reviewByDate).sort((a, b) => new Date(a) - new Date(b));
-        const formattedReviewLabels = sortedReviewLabels.map(date => {
-          const d = new Date(date);
-          return d.toLocaleDateString('ru-RU');
+        const formattedReviewLabels = sortedReviewLabels.map(dateIso => {
+          const dateObj = new Date(dateIso);
+          return dateObj.toLocaleDateString('ru-RU');
         });
-        const reviewPositiveArr = formattedReviewLabels.map(d => (reviewByDate[d]?.positive || 0));
-        const reviewNegativeArr = formattedReviewLabels.map(d => (reviewByDate[d]?.negative || 0));
+        const reviewPositiveArr = sortedReviewLabels.map(d => (reviewByDate[d]?.positive || 0));
+        const reviewNegativeArr = sortedReviewLabels.map(d => (reviewByDate[d]?.negative || 0));
         const reviewPositiveCount = reviewPositiveArr.reduce((a, b) => a + b, 0);
         const reviewNegativeCount = reviewNegativeArr.reduce((a, b) => a + b, 0);
         const reviewData = chartType === 'pie' || chartType === 'doughnut'
