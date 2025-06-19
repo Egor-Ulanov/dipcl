@@ -801,10 +801,21 @@ function Stats({ user }) {
   }));
 
   return (
-    <div className="stats-page">
-      <ToxicityChart data={toxicityChartData} />
-      <ReviewChart data={reviewChartDataArr} />
-      <TopViolators violators={topViolators} />
+    <div className="stats-container">
+      <h2 className="chart-title">Статистика проверок</h2>
+      <div className="controls">
+        <select className="stats-select" value={source} onChange={(e) => setSource(e.target.value)}>
+          <option value="telegram">Telegram-группы</option>
+          <option value="personal">Личные проверки</option>
+        </select>
+      </div>
+      <div className="stats-content">
+        <div className="charts-container">
+          <ToxicityChart data={toxicityChartData} />
+          <ReviewChart data={reviewChartDataArr} />
+        </div>
+        <TopViolators violators={topViolators} />
+      </div>
       <CheckHistory history={checkHistoryData} />
     </div>
   );
