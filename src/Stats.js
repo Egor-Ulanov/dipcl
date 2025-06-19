@@ -56,32 +56,29 @@ function Stats({ user }) {
 
     const now = new Date();
     let startDate;
+    let endDate;
 
-    switch (periodType) {
-      case 'day':
-        startDate = new Date(now);
-        startDate.setDate(now.getDate() - 1);
-        break;
-      case 'week':
-        startDate = new Date(now);
-        startDate.setDate(now.getDate() - 7);
-        break;
-      case 'month':
-        startDate = new Date(now);
-        startDate.setMonth(now.getMonth() - 1);
-        break;
-      case 'custom':
-        startDate = new Date(customStartDate);
-        now.setTime(customEndDate.getTime());
-        break;
-      default:
-        return { dates, data };
+    if (periodType === 'day') {
+      startDate = new Date(now);
+      endDate = new Date(now);
+    } else if (periodType === 'week') {
+      const dayOfWeek = now.getDay() === 0 ? 7 : now.getDay();
+      startDate = new Date(now);
+      startDate.setDate(now.getDate() - (dayOfWeek - 1));
+      endDate = new Date(now);
+      endDate.setDate(startDate.getDate() + 6);
+    } else if (periodType === 'month') {
+      startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    } else if (periodType === 'custom') {
+      startDate = new Date(customStartDate);
+      startDate.setHours(0, 0, 0, 0);
+      endDate = new Date(customEndDate);
+      endDate.setHours(0, 0, 0, 0);
+    } else {
+      startDate = new Date(-8640000000000000);
+      endDate = new Date(8640000000000000);
     }
-
-    // Устанавливаем время для корректного сравнения
-    startDate.setHours(0, 0, 0, 0);
-    const endDate = new Date(now);
-    endDate.setHours(23, 59, 59, 999);
 
     console.log('Фильтрация по периоду:', {
       startDate: startDate.toISOString(),
@@ -91,6 +88,7 @@ function Stats({ user }) {
     const filteredDates = {};
     const filteredData = data.filter(item => {
       const itemDate = new Date(item.date);
+      itemDate.setHours(0, 0, 0, 0);
 
       console.log('Проверка записи:', {
         itemDate: itemDate.toISOString(),
