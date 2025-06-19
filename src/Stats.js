@@ -102,7 +102,9 @@ function Stats({ user }) {
         if (!filteredDates[dateStr]) {
           filteredDates[dateStr] = { safe: 0, toxic: 0 };
         }
-        const is_toxic = item.violations && item.violations.includes("Токсичность");
+        const is_toxic = item.sentences
+          ? item.sentences.some(sent => sent.violations && sent.violations.includes("Токсичность"))
+          : item.violations && item.violations.includes("Токсичность");
         if (is_toxic) {
           filteredDates[dateStr].toxic++;
         } else {
