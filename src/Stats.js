@@ -395,17 +395,57 @@ function Stats({ user }) {
         const violatorsStats = calculateViolators(filtered.data);
         setViolators(violatorsStats);
 
-        const labels = Object.keys(filtered.dates).sort();
-        const safeCount = labels.map(date => filtered.dates[date].safe || 0);
-        const unsafeCount = labels.map(date => filtered.dates[date].toxic || 0);
-
         const sortedLabels = Object.keys(filtered.dates).sort((a, b) => new Date(a) - new Date(b));
-        const formattedLabels = sortedLabels.map(date => {
-          const d = new Date(date);
-          return d.toLocaleDateString('ru-RU');
-        });
+        const safeCount = sortedLabels.map(date => filtered.dates[date].safe || 0);
+        const unsafeCount = sortedLabels.map(date => filtered.dates[date].toxic || 0);
 
-        setChartData(prepareChartData(formattedLabels, safeCount, unsafeCount));
+        const toxicityData = {
+          labels: sortedLabels,
+          datasets: [
+            {
+              label: 'Безопасные',
+              data: safeCount,
+              backgroundColor: 'rgba(75, 192, 192, 0.5)',
+              borderColor: 'rgba(75, 192, 192, 1)',
+              borderWidth: 1,
+            },
+            {
+              label: 'Токсичные',
+              data: unsafeCount,
+              backgroundColor: 'rgba(255, 99, 132, 0.5)',
+              borderColor: 'rgba(255, 99, 132, 1)',
+              borderWidth: 1,
+            },
+          ],
+        };
+        const toxicityOptions = {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'top' },
+            tooltip: {
+              callbacks: {
+                title: (tooltipItems) => {
+                  const date = new Date(tooltipItems[0].label);
+                  return date.toLocaleDateString('ru-RU');
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              ticks: {
+                callback: function(value, index, ticks) {
+                  const date = new Date(this.getLabelForValue(value));
+                  return date.toLocaleDateString('ru-RU');
+                }
+              }
+            },
+            y: { beginAtZero: true }
+          }
+        };
+
+        setChartData(toxicityData);
 
         // График отзывов только по is_review/review === true
         const reviewChecks = filtered.data.filter(item => item.is_review === true);
@@ -429,49 +469,55 @@ function Stats({ user }) {
           }
         });
         const sortedReviewLabels = Object.keys(reviewByDate).sort((a, b) => new Date(a) - new Date(b));
-        const formattedReviewLabels = sortedReviewLabels.map(dateIso => {
-          const dateObj = new Date(dateIso);
-          return dateObj.toLocaleDateString('ru-RU');
-        });
         const reviewPositiveArr = sortedReviewLabels.map(d => (reviewByDate[d]?.positive || 0));
         const reviewNegativeArr = sortedReviewLabels.map(d => (reviewByDate[d]?.negative || 0));
         const reviewPositiveCount = reviewPositiveArr.reduce((a, b) => a + b, 0);
         const reviewNegativeCount = reviewNegativeArr.reduce((a, b) => a + b, 0);
-        const reviewData = chartType === 'pie' || chartType === 'doughnut'
-          ? {
-              labels: ['Положительные', 'Отрицательные'],
-              datasets: [{
-                data: [reviewPositiveCount, reviewNegativeCount],
-                backgroundColor: [
-                  'rgba(75, 192, 192, 0.5)',
-                  'rgba(255, 99, 132, 0.5)',
-                ],
-                borderColor: [
-                  'rgba(75, 192, 192, 1)',
-                  'rgba(255, 99, 132, 1)',
-                ],
-                borderWidth: 1,
-              }],
+        const reviewData = {
+          labels: sortedReviewLabels,
+          datasets: [
+            {
+              label: 'Положительные',
+              data: reviewPositiveArr,
+              backgroundColor: 'rgba(75, 192, 192, 0.5)',
+              borderColor: 'rgba(75, 192, 192, 1)',
+              borderWidth: 1,
+            },
+            {
+              label: 'Отрицательные',
+              data: reviewNegativeArr,
+              backgroundColor: 'rgba(255, 99, 132, 0.5)',
+              borderColor: 'rgba(255, 99, 132, 1)',
+              borderWidth: 1,
+            },
+          ],
+        };
+        const reviewOptions = {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'top' },
+            tooltip: {
+              callbacks: {
+                title: (tooltipItems) => {
+                  const date = new Date(tooltipItems[0].label);
+                  return date.toLocaleDateString('ru-RU');
+                }
+              }
             }
-          : {
-              labels: formattedReviewLabels,
-              datasets: [
-                {
-                  label: 'Положительные',
-                  data: reviewPositiveArr,
-                  backgroundColor: 'rgba(75, 192, 192, 0.5)',
-                  borderColor: 'rgba(75, 192, 192, 1)',
-                  borderWidth: 1,
-                },
-                {
-                  label: 'Отрицательные',
-                  data: reviewNegativeArr,
-                  backgroundColor: 'rgba(255, 99, 132, 0.5)',
-                  borderColor: 'rgba(255, 99, 132, 1)',
-                  borderWidth: 1,
-                },
-              ],
-            };
+          },
+          scales: {
+            x: {
+              ticks: {
+                callback: function(value, index, ticks) {
+                  const date = new Date(this.getLabelForValue(value));
+                  return date.toLocaleDateString('ru-RU');
+                }
+              }
+            },
+            y: { beginAtZero: true }
+          }
+        };
 
         setReviewChartData(reviewData);
 
@@ -560,17 +606,57 @@ function Stats({ user }) {
         const filtered = filterDataByPeriod(data, dates);
         setHistory(filtered.data);
 
-        const labels = Object.keys(filtered.dates).sort();
-        const safeCount = labels.map(date => filtered.dates[date].safe || 0);
-        const unsafeCount = labels.map(date => filtered.dates[date].toxic || 0);
-
         const sortedLabels = Object.keys(filtered.dates).sort((a, b) => new Date(a) - new Date(b));
-        const formattedLabels = sortedLabels.map(date => {
-          const d = new Date(date);
-          return d.toLocaleDateString('ru-RU');
-        });
+        const safeCount = sortedLabels.map(date => filtered.dates[date].safe || 0);
+        const unsafeCount = sortedLabels.map(date => filtered.dates[date].toxic || 0);
 
-        setChartData(prepareChartData(formattedLabels, safeCount, unsafeCount));
+        const toxicityData = {
+          labels: sortedLabels,
+          datasets: [
+            {
+              label: 'Безопасные',
+              data: safeCount,
+              backgroundColor: 'rgba(75, 192, 192, 0.5)',
+              borderColor: 'rgba(75, 192, 192, 1)',
+              borderWidth: 1,
+            },
+            {
+              label: 'Токсичные',
+              data: unsafeCount,
+              backgroundColor: 'rgba(255, 99, 132, 0.5)',
+              borderColor: 'rgba(255, 99, 132, 1)',
+              borderWidth: 1,
+            },
+          ],
+        };
+        const toxicityOptions = {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'top' },
+            tooltip: {
+              callbacks: {
+                title: (tooltipItems) => {
+                  const date = new Date(tooltipItems[0].label);
+                  return date.toLocaleDateString('ru-RU');
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              ticks: {
+                callback: function(value, index, ticks) {
+                  const date = new Date(this.getLabelForValue(value));
+                  return date.toLocaleDateString('ru-RU');
+                }
+              }
+            },
+            y: { beginAtZero: true }
+          }
+        };
+
+        setChartData(toxicityData);
 
         // График отзывов только по is_review === true, группировка по дате
         const reviewChecks = filtered.data.filter(item => item.is_review === true);
@@ -595,49 +681,55 @@ function Stats({ user }) {
           }
         });
         const sortedReviewLabels = Object.keys(reviewByDate).sort((a, b) => new Date(a) - new Date(b));
-        const formattedReviewLabels = sortedReviewLabels.map(dateIso => {
-          const dateObj = new Date(dateIso);
-          return dateObj.toLocaleDateString('ru-RU');
-        });
         const reviewPositiveArr = sortedReviewLabels.map(d => (reviewByDate[d]?.positive || 0));
         const reviewNegativeArr = sortedReviewLabels.map(d => (reviewByDate[d]?.negative || 0));
         const reviewPositiveCount = reviewPositiveArr.reduce((a, b) => a + b, 0);
         const reviewNegativeCount = reviewNegativeArr.reduce((a, b) => a + b, 0);
-        const reviewData = chartType === 'pie' || chartType === 'doughnut'
-          ? {
-              labels: ['Положительные', 'Отрицательные'],
-              datasets: [{
-                data: [reviewPositiveCount, reviewNegativeCount],
-                backgroundColor: [
-                  'rgba(75, 192, 192, 0.5)',
-                  'rgba(255, 99, 132, 0.5)',
-                ],
-                borderColor: [
-                  'rgba(75, 192, 192, 1)',
-                  'rgba(255, 99, 132, 1)',
-                ],
-                borderWidth: 1,
-              }],
+        const reviewData = {
+          labels: sortedReviewLabels,
+          datasets: [
+            {
+              label: 'Положительные',
+              data: reviewPositiveArr,
+              backgroundColor: 'rgba(75, 192, 192, 0.5)',
+              borderColor: 'rgba(75, 192, 192, 1)',
+              borderWidth: 1,
+            },
+            {
+              label: 'Отрицательные',
+              data: reviewNegativeArr,
+              backgroundColor: 'rgba(255, 99, 132, 0.5)',
+              borderColor: 'rgba(255, 99, 132, 1)',
+              borderWidth: 1,
+            },
+          ],
+        };
+        const reviewOptions = {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'top' },
+            tooltip: {
+              callbacks: {
+                title: (tooltipItems) => {
+                  const date = new Date(tooltipItems[0].label);
+                  return date.toLocaleDateString('ru-RU');
+                }
+              }
             }
-          : {
-              labels: formattedReviewLabels,
-              datasets: [
-                {
-                  label: 'Положительные',
-                  data: reviewPositiveArr,
-                  backgroundColor: 'rgba(75, 192, 192, 0.5)',
-                  borderColor: 'rgba(75, 192, 192, 1)',
-                  borderWidth: 1,
-                },
-                {
-                  label: 'Отрицательные',
-                  data: reviewNegativeArr,
-                  backgroundColor: 'rgba(255, 99, 132, 0.5)',
-                  borderColor: 'rgba(255, 99, 132, 1)',
-                  borderWidth: 1,
-                },
-              ],
-            };
+          },
+          scales: {
+            x: {
+              ticks: {
+                callback: function(value, index, ticks) {
+                  const date = new Date(this.getLabelForValue(value));
+                  return date.toLocaleDateString('ru-RU');
+                }
+              }
+            },
+            y: { beginAtZero: true }
+          }
+        };
 
         setReviewChartData(reviewData);
       } catch (error) {
@@ -760,20 +852,7 @@ function Stats({ user }) {
             <h3>Токсичность сообщений</h3>
             {chartData && <ChartComponent
               data={chartData}
-              options={{
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                  legend: {
-                    position: 'top',
-                  },
-                },
-                scales: chartType !== 'pie' && chartType !== 'doughnut' ? {
-                  y: {
-                    beginAtZero: true,
-                  },
-                } : undefined,
-              }}
+              options={toxicityOptions}
             />}
           </div>
 
@@ -781,20 +860,7 @@ function Stats({ user }) {
             <h3>Отзывы</h3>
             {reviewChartData && <ChartComponent
               data={reviewChartData}
-              options={{
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                  legend: {
-                    position: 'top',
-                  },
-                },
-                scales: chartType !== 'pie' && chartType !== 'doughnut' ? {
-                  y: {
-                    beginAtZero: true,
-                  },
-                } : undefined,
-              }}
+              options={reviewOptions}
             />}
           </div>
         </div>
