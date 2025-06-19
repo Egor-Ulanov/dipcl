@@ -769,6 +769,72 @@ function Stats({ user }) {
 
   const sortedHistory = [...history].sort((a, b) => new Date(b.date) - new Date(a.date));
 
+  // Перед return (
+  // --- График токсичности ---
+  const sortedLabels = chartData?.labels || [];
+  const safeCount = chartData?.datasets?.[0]?.data || [];
+  const unsafeCount = chartData?.datasets?.[1]?.data || [];
+  const toxicityData = chartData || { labels: [], datasets: [] };
+  const toxicityOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'top' },
+      tooltip: {
+        callbacks: {
+          title: (tooltipItems) => {
+            const date = new Date(tooltipItems[0].label);
+            return date.toLocaleDateString('ru-RU');
+          }
+        }
+      }
+    },
+    scales: {
+      x: {
+        ticks: {
+          callback: function(value, index, ticks) {
+            const date = new Date(this.getLabelForValue(value));
+            return date.toLocaleDateString('ru-RU');
+          }
+        }
+      },
+      y: { beginAtZero: true }
+    }
+  };
+  // --- График отзывов ---
+  const reviewData = reviewChartData || { labels: [], datasets: [] };
+  const reviewOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'top' },
+      tooltip: {
+        callbacks: {
+          title: (tooltipItems) => {
+            const date = new Date(tooltipItems[0].label);
+            return date.toLocaleDateString('ru-RU');
+          }
+        }
+      }
+    },
+    scales: {
+      x: {
+        ticks: {
+          callback: function(value, index, ticks) {
+            const date = new Date(this.getLabelForValue(value));
+            return date.toLocaleDateString('ru-RU');
+          }
+        }
+      },
+      y: { beginAtZero: true }
+    }
+  };
+  // ... existing code ...
+  // В рендере:
+  // <Bar data={chartData} ... /> -> <Bar data={toxicityData} options={toxicityOptions} ... />
+  // <Bar data={reviewChartData} ... /> -> <Bar data={reviewData} options={reviewOptions} ... />
+  // ... existing code ...
+
   return (
     <div className="stats-container">
       <h2 className="chart-title">Статистика проверок</h2>
@@ -851,7 +917,7 @@ function Stats({ user }) {
           <div className="chart-section">
             <h3>Токсичность сообщений</h3>
             {chartData && <ChartComponent
-              data={chartData}
+              data={toxicityData}
               options={toxicityOptions}
             />}
           </div>
@@ -859,7 +925,7 @@ function Stats({ user }) {
           <div className="chart-section">
             <h3>Отзывы</h3>
             {reviewChartData && <ChartComponent
-              data={reviewChartData}
+              data={reviewData}
               options={reviewOptions}
             />}
           </div>
