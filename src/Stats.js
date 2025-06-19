@@ -375,9 +375,8 @@ function Stats({ user }) {
       }
 
       try {
-        const dates = {};
+        let dates = {};
         const data = [];
-
         const checksRef = collection(db, 'checks');
         const checksSnapshot = await getDocs(query(checksRef, where('email', '==', user.email)));
 
@@ -385,27 +384,10 @@ function Stats({ user }) {
           const check = doc.data();
           if (!check.date) return;
           const checkDate = check.date.toDate();
-          const dateStr = checkDate.toLocaleDateString();
-
-          if (!dates[dateStr]) {
-            dates[dateStr] = {
-              safe: 0,
-              toxic: 0,
-              positive: 0,
-              negative: 0,
-              checks: []
-            };
-          }
-
           // Новый формат: sentences — одна проверка = один блок
           if (Array.isArray(check.sentences)) {
             const hasToxic = check.sentences.some(sent => sent.violations && sent.violations.includes("Токсичность"));
             const is_safe = !hasToxic;
-            if (hasToxic) {
-              dates[dateStr].toxic++;
-            } else {
-              dates[dateStr].safe++;
-            }
             const is_review = check.sentences.some(sent => sent.is_review === true);
             const checkData = {
               id: doc.id,
@@ -416,7 +398,6 @@ function Stats({ user }) {
               sentences: check.sentences,
               is_review: is_review,
             };
-            dates[dateStr].checks.push(checkData);
             data.push(checkData);
           } else {
             // Старый формат
@@ -432,32 +413,82 @@ function Stats({ user }) {
               violations: violations,
               is_review: is_review,
             };
-            const is_toxic = violations.includes("Токсичность");
-            if (is_toxic) {
-              dates[dateStr].toxic++;
-            } else {
-              dates[dateStr].safe++;
-            }
-            dates[dateStr].checks.push(checkData);
             data.push(checkData);
           }
         });
 
-        const filtered = filterDataByPeriod(data, dates);
-        setHistory(filtered.data);
-
-        const labels = Object.keys(filtered.dates).sort();
-        const safeCount = labels.map(date => filtered.dates[date].safe || 0);
-        const unsafeCount = labels.map(date => filtered.dates[date].toxic || 0);
-
+        // --- Новый блок: фильтрация по периоду, группировка, сортировка ---
+        let startDate, endDate;
+        const now = new Date();
+        if (periodType === 'all') {
+          startDate = new Date(-8640000000000000);
+          endDate = new Date(8640000000000000);
+        } else {
+          endDate = new Date(now);
+          endDate.setHours(23, 59, 59, 999);
+          switch (periodType) {
+            case 'day':
+              startDate = new Date(now);
+              startDate.setHours(0, 0, 0, 0);
+              break;
+            case 'week':
+              startDate = new Date(now);
+              startDate.setDate(now.getDate() - 6);
+              startDate.setHours(0, 0, 0, 0);
+              break;
+            case 'month':
+              startDate = new Date(now);
+              startDate.setMonth(now.getMonth() - 1);
+              startDate.setHours(0, 0, 0, 0);
+              break;
+            case 'custom':
+              startDate = new Date(customStartDate);
+              startDate.setHours(0, 0, 0, 0);
+              endDate = new Date(customEndDate);
+              endDate.setHours(23, 59, 59, 999);
+              break;
+            default:
+              startDate = new Date(-8640000000000000);
+              endDate = new Date(8640000000000000);
+          }
+        }
+        // Фильтруем по периоду
+        const filteredChecks = data.filter(item => {
+          const d = new Date(item.date);
+          return d >= startDate && d <= endDate;
+        });
+        // Группируем по датам (UTC, ISO)
+        dates = {};
+        filteredChecks.forEach(item => {
+          const d = new Date(item.date);
+          const dateStr = d.toISOString().split('T')[0];
+          if (!dates[dateStr]) {
+            dates[dateStr] = { safe: 0, toxic: 0, checks: [] };
+          }
+          if (Array.isArray(item.sentences)) {
+            const hasToxic = item.sentences.some(sent => sent.violations && sent.violations.includes("Токсичность"));
+            if (hasToxic) dates[dateStr].toxic++;
+            else dates[dateStr].safe++;
+          } else {
+            const is_toxic = item.violations && item.violations.includes("Токсичность");
+            if (is_toxic) dates[dateStr].toxic++;
+            else dates[dateStr].safe++;
+          }
+          dates[dateStr].checks.push(item);
+        });
+        // Историю сортируем по дате по убыванию
+        const sortedHistory = [...filteredChecks].sort((a, b) => new Date(b.date) - new Date(a.date));
+        setHistory(sortedHistory);
+        // График
+        const labels = Object.keys(dates).sort();
+        const safeCount = labels.map(date => dates[date].safe || 0);
+        const unsafeCount = labels.map(date => dates[date].toxic || 0);
         setChartData(prepareChartData(labels, safeCount, unsafeCount));
-
         // График отзывов только по is_review === true, группировка по дате
-        const reviewChecks = filtered.data.filter(item => item.is_review === true);
+        const reviewChecks = filteredChecks.filter(item => item.is_review === true);
         const reviewByDate = {};
         reviewChecks.forEach(item => {
           const d = item.date.toLocaleDateString();
-          // Для новых: если есть предложения, считаем положительный/отрицательный по большинству
           if (item.sentences) {
             const pos = item.sentences.filter(s => s.sentiment === "positive").length;
             const neg = item.sentences.filter(s => s.sentiment === "negative").length;
@@ -514,7 +545,6 @@ function Stats({ user }) {
                 },
               ],
             };
-
         setReviewChartData(reviewData);
       } catch (error) {
         console.error('Ошибка при загрузке данных:', error);
