@@ -334,9 +334,9 @@ function Stats({ user }) {
 
             // Новый формат: sentences — одна проверка = один блок
             if (Array.isArray(check.sentences)) {
-              const hasViolation = check.sentences.some(sent => sent.violations && sent.violations.length > 0);
-              const is_safe = !hasViolation;
-              if (hasViolation) {
+              const hasToxic = check.sentences.some(sent => sent.violations && sent.violations.includes("Токсичность"));
+              const is_safe = !hasToxic;
+              if (hasToxic) {
                 dates[dateStr].toxic++;
               } else {
                 dates[dateStr].safe++;
@@ -503,18 +503,14 @@ function Stats({ user }) {
 
           // Новый формат: sentences — одна проверка = один блок
           if (Array.isArray(check.sentences)) {
-            // Определяем, есть ли нарушения хотя бы в одном предложении
-            const hasViolation = check.sentences.some(sent => sent.violations && sent.violations.length > 0);
-            const is_safe = !hasViolation;
-            // Для графика: одна проверка = один столбец
-            if (hasViolation) {
+            const hasToxic = check.sentences.some(sent => sent.violations && sent.violations.includes("Токсичность"));
+            const is_safe = !hasToxic;
+            if (hasToxic) {
               dates[dateStr].toxic++;
             } else {
               dates[dateStr].safe++;
             }
-            // Для отзывов: если хотя бы одно предложение is_review
             const is_review = check.sentences.some(sent => sent.is_review === true);
-            // Для списка: сохраняем массив предложений
             const checkData = {
               id: doc.id,
               date: checkDate,
